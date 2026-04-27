@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Costing Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles copy.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap');
+    body { font-family: 'Barlow', sans-serif; }
+    #scope { min-height: 7.5rem; resize: vertical; }
+  </style>
+</head>
+<body class="min-h-screen pb-12 app-shell">
+  <div class="max-w-6xl mx-auto p-6 app-container">
+    <div class="flex justify-between items-center mb-8 page-header">
+      <div>
+        <h1 class="text-3xl font-semibold title-white">⚡Job Costing Dashboard⚡</h1>
+        <p class="subtitle">Risha Vishal Electrical &amp; Construction Co. Ltd.</p>
+      </div>
+      <div class="text-right flex flex-col items-end gap-2">
+        <p id="status" class="text-sm text-emerald-600 font-medium">⏳ Loading materials...</p>
+        <button onclick="loadMaterials()" class="btn-outline text-xs px-3 py-1.5">↻ Refresh</button>
+      </div>
+    </div>
+
+    <!-- Job Details -->
+    <div class="rounded-2xl shadow p-6 mb-6 grid grid-cols-1 md:grid-cols-3 gap-6 panel">
+      <div>
+        <label class="field-label">CUSTOMER NAME</label>
+        <input id="customer" type="text" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input" placeholder="John Smith">
+      </div>
+      <div>
+        <label class="field-label">ADDRESS</label>
+        <input id="address" type="text" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input" placeholder="123 Main Road, Chaguanas">
+      </div>
+      <div>
+        <label class="field-label">DATE</label>
+        <input id="date" type="date" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input">
+      </div>
+    </div>
+
+    <div id="jobSections">
+      <div class="job-section" data-job-index="0">
+        <!-- Scope (standalone, 5-line expandable) -->
+        <div class="rounded-2xl shadow p-6 mb-8 panel">
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-xl font-bold title-white">SCOPE</label>
+            <button onclick="removeSection(0)" class="text-red-500 hover:text-red-700 font-medium text-sm" title="Remove Section">✕</button>
+          </div>
+          <textarea id="scope-0" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input" placeholder="Describe the scope of this job..."></textarea>
+        </div>
+
+        <!-- MATERIAL LIST -->
+        <div class="rounded-3xl shadow mb-10 table-panel">
+          <div class="px-6 pt-4 pb-0">
+            <h2 class="font-semibold text-xl mb-3 title-white">MATERIAL LIST</h2>
+            <!-- Search row + dropdown — all in one relative container so dropdown isn't clipped -->
+            <div class="relative pb-4 border-b">
+              <input id="searchOther-0" type="text" placeholder="Search by item name or SKU..."
+                     class="w-full rounded-2xl px-5 py-3 focus:outline-none field-input"
+                     oninput="filterOther(0)" onkeydown="handleSearchKey(event, 0)" autocomplete="off">
+              <ul id="suggestionList-0" class="suggestion-list hidden" style="top:100%;"></ul>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="table-header">
+                <tr>
+                  <th class="text-left p-4 font-medium w-28">SKU</th>
+                  <th class="text-center p-4 font-medium w-28">Qty</th>
+                  <th class="text-left p-4 font-medium w-24">Unit</th>
+                  <th class="text-left p-4 font-medium">Item</th>
+                  <th class="text-center p-4 font-medium w-20">Remove</th>
+                </tr>
+              </thead>
+              <tbody id="materialListBody-0">
+                <tr><td colspan="5" class="p-8 text-center text-gray-400 italic">No items added yet. Search and add materials above.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ITEMS NOT LISTED -->
+        <div class="rounded-3xl shadow mb-10 panel">
+          <div class="px-6 py-4 border-b flex items-center justify-between">
+            <h2 class="font-semibold text-xl title-white">ITEMS NOT LISTED</h2>
+            <button onclick="openAddModal(0)" class="btn-primary px-6 py-2.5">
+              + Add New Item
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="table-header">
+                <tr>
+                  <th class="text-left p-4 font-medium w-28">SKU</th>
+                  <th class="text-center p-4 font-medium w-28">Qty</th>
+                  <th class="text-left p-4 font-medium w-24">Unit</th>
+                  <th class="text-left p-4 font-medium">Item</th>
+                  <th class="text-center p-4 font-medium w-20">Remove</th>
+                </tr>
+              </thead>
+              <tbody id="tmpListBody-0" class="divide-y">
+                <tr><td colspan="5" class="p-8 text-center text-gray-400 italic">No unlisted items added yet. Click "Add New Item" to add one.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="addNewSectionContainer" class="mb-10">
+      <button id="addNewSectionBtn" onclick="addNewSection()" class="btn-primary w-full max-w-xs mx-auto block text-center">
+        + Add New Section
+      </button>
+    </div>
+
+    <!-- Add New Item Modal -->
+    <div id="addModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+      <div class="absolute inset-0 bg-black bg-opacity-40" onclick="closeAddModal()"></div>
+      <div class="modal-card mx-4">
+        <h3 class="modal-title">ADD UNLISTED ITEM</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="modal-label">ITEM NAME <span class="text-accent">*</span></label>
+            <input id="modalItemName" type="text"
+                   class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
+                   placeholder="e.g. Custom conduit fitting"
+                   onkeydown="if(event.key==='Enter') confirmAddModal()">
+          </div>
+          <div>
+            <label class="modal-label">QUANTITY</label>
+            <input id="modalQty" type="number" value="1" min="0" step="any"
+                   class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
+                   onkeydown="if(event.key==='Enter') confirmAddModal()">
+          </div>
+          <div class="flex gap-4">
+            <div class="flex-1">
+              <label class="modal-label">SKU (auto)</label>
+              <div id="modalSkuPreview" class="modal-badge rounded-xl px-4 py-3 text-sm font-mono">TMP-001</div>
+            </div>
+            <div class="flex-1">
+              <label class="modal-label">UNIT (auto)</label>
+              <div class="modal-badge rounded-xl px-4 py-3 text-sm">each</div>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3 mt-8 modal-actions">
+          <button onclick="closeAddModal()" class="btn-outline flex-1 py-3">
+            Cancel
+          </button>
+          <button onclick="confirmAddModal()" class="btn-primary flex-1 py-3">
+            Add Item
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Qty Modal (search selection) -->
+    <div id="qtyModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+      <div class="absolute inset-0 bg-black bg-opacity-40" onclick="closeQtyModal()"></div>
+      <div class="modal-card mx-4">
+        <h3 class="modal-title" id="qtyModalTitle">ADD ITEM</h3>
+        <p id="qtyModalSku" class="text-xs font-mono modal-meta"></p>
+        <div class="space-y-4">
+          <div>
+            <label class="modal-label">QUANTITY</label>
+            <input id="qtyModalQty" type="number" value="1" min="0" step="any"
+                   class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
+                   onkeydown="if(event.key==='Enter') confirmQtyModal()">
+          </div>
+          <div class="flex gap-4">
+            <div class="flex-1">
+              <label class="modal-label">UNIT</label>
+              <div id="qtyModalUnit" class="modal-badge rounded-xl px-4 py-3 text-sm"></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3 mt-8 modal-actions">
+          <button onclick="closeQtyModal()" class="btn-outline flex-1 py-3">
+            Cancel
+          </button>
+          <button onclick="confirmQtyModal()" class="btn-primary flex-1 py-3">
+            Add to List
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="rounded-3xl shadow p-6 mb-10 panel">
+      <h2 class="font-semibold text-xl mb-3 title-white">NOTES</h2>
+      <textarea id="notes" rows="5" class="w-full rounded-2xl px-5 py-4 focus:outline-none field-input" placeholder="Additional notes for this job..."></textarea>
+    </div>
+
+    <!-- Action Buttons -->
+    <!--<div class="rounded-3xl p-8 panel action-panel">
+      <button onclick="generatePDF()"
+              class="btn btn-primary w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
+        Share PDF 📤
+      </button>
+      <button onclick="exportCSV()"
+              class="btn btn-secondary w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
+        Share CSV ➜]
+      </button>
+    </div>-->
+
+    <!-- SUMMARY BAR -->
+ <div class="summary-bar">
+  <button onclick="generatePDF()"
+              class="btn btn-primary w-screen font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
+        Share PDF 📤
+      </button>
+      <div class="sum-divider"></div>
+      <button onclick="exportCSV()"
+              class="btn btn-secondary w-screen font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
+        Share CSV ➜]
+      </button>
+  </div>
+ </div>
+
+  </div>
+
+  <script>
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQF-dVNCimVYFht-LgwEeKT4rEtW-IDphibc5oSV60YBjLxGn4KGT45nU2U58EfBCYbF0UdDxdoe88r/pub?gid=0&single=true&output=csv";
+
+    let allMaterials = [];
+    let jobs = [{ addedItems: [], tmpItems: [] }];
+    let currentSuggestions = [];
+    let selectedSuggestionIndex = -1;
+    let currentJobIndex = 0;
+    let pendingItem = null;
+
+    async function loadMaterials() {
+      const status = document.getElementById('status');
+      status.textContent = '⏳ Loading materials...';
+      try {
+        const res = await fetch(CSV_URL + '&t=' + Date.now());
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const text = await res.text();
+        const parsed = parseCSV(text);
+        if (!parsed.length) throw new Error('Sheet appears empty');
+        allMaterials = parsed;
+        status.textContent = '✅ ' + allMaterials.length + ' items loaded';
+      } catch (err) {
+        status.innerHTML = '❌ Load failed — <span style="color:#6b7280;font-size:0.75rem">' + err.message + '</span>';
+      }
+    }
+
+    function parseCSV(csv) {
+      const lines = csv.trim().split('\n');
+      return lines.slice(1).map(line => {
+        const values = [];
+        let current = '', inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"') {
+            if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+            else { inQuotes = !inQuotes; }
+          } else if (ch === ',' && !inQuotes) {
+            values.push(current.trim()); current = '';
+          } else { current += ch; }
+        }
+        values.push(current.trim());
+        const rawPrice = values[3] ? values[3].trim().replace(/[$,TTD ]/g, '') : '';
+        const price = rawPrice !== '' && !isNaN(parseFloat(rawPrice)) ? parseFloat(rawPrice) : null;
+        return { SKU: values[0] || '', Item: values[1] || '', Unit: values[2] || '', Price: price };
+      }).filter(m => m.Item);
+    }
+
+    function createJobSection(jobIndex) {
+      return `
+      <div class="job-section" data-job-index="${jobIndex}">
+        <div class="rounded-2xl shadow p-6 mb-8 panel">
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-xl font-bold title-white">Scope</label>
+            <button onclick="removeSection(${jobIndex})" class="text-red-500 hover:text-red-700 font-medium text-sm" title="Remove Section">✕</button>
+          </div>
+          <textarea id="scope-${jobIndex}" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input" placeholder="Describe the scope of this job..."></textarea>
+        </div>
+
+        <div class="rounded-3xl shadow mb-10 table-panel">
+          <div class="px-6 pt-4 pb-0">
+            <h2 class="font-semibold text-xl mb-3 title-white">Material List</h2>
+            <div class="relative pb-4 border-b">
+              <input id="searchOther-${jobIndex}" type="text" placeholder="Search by item name or SKU..."
+                     class="w-full rounded-2xl px-5 py-3 focus:outline-none field-input"
+                     oninput="filterOther(${jobIndex})" onkeydown="handleSearchKey(event, ${jobIndex})" autocomplete="off">
+              <ul id="suggestionList-${jobIndex}"
+                  class="suggestion-list hidden"
+                  style="top:100%;"></ul>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="table-header">
+                <tr>
+                  <th class="text-left font-medium w-28">SKU</th>
+                  <th class="text-center font-medium w-28">Qty</th>
+                  <th class="text-left font-medium w-24">Unit</th>
+                  <th class="text-left font-medium">Item</th>
+                  <th class="text-center font-medium w-20">Remove</th>
+                </tr>
+              </thead>
+              <tbody id="materialListBody-${jobIndex}">
+                <tr><td colspan="5" class="p-8 text-center text-gray-400 italic">No items added yet. Search and add materials above.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="rounded-3xl shadow mb-10 table-panel">
+          <div class="px-6 py-4 border-b flex items-center justify-between">
+            <h2 class="font-semibold text-xl title-white">Items Not Listed</h2>
+            <button onclick="openAddModal(${jobIndex})" class="btn-primary px-6 py-2.5">
+              + Add New Item
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="table-header">
+                <tr>
+                  <th class="text-left font-medium w-28">SKU</th>
+                  <th class="text-center font-medium w-28">Qty</th>
+                  <th class="text-left font-medium w-24">Unit</th>
+                  <th class="text-left font-medium">Item</th>
+                  <th class="text-center font-medium w-20">Remove</th>
+                </tr>
+              </thead>
+              <tbody id="tmpListBody-${jobIndex}">
+                <tr><td colspan="5" class="p-8 text-center text-gray-400 italic">No unlisted items added yet. Click "Add New Item" to add one.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function addNewSection() {
+      const nextIndex = jobs.length;
+      jobs.push({ addedItems: [], tmpItems: [] });
+      const container = document.getElementById('jobSections');
+      const temp = document.createElement('div');
+      temp.innerHTML = createJobSection(nextIndex);
+      const section = temp.firstElementChild;
+      if (section) container.appendChild(section);
+      currentJobIndex = nextIndex;
+      setTimeout(() => {
+        const input = document.getElementById('searchOther-' + nextIndex);
+        if (input) input.focus();
+      }, 50);
+    }
+
+    function removeSection(jobIndex) {
+      if (jobs.length <= 1) return; // Prevent removing the last section
+      jobs.splice(jobIndex, 1);
+      reRenderAllSections();
+      currentJobIndex = Math.min(currentJobIndex, jobs.length - 1);
+    }
+
+    function reRenderAllSections() {
+      const container = document.getElementById('jobSections');
+      container.innerHTML = '';
+      jobs.forEach((job, i) => {
+        const temp = document.createElement('div');
+        temp.innerHTML = createJobSection(i);
+        const section = temp.firstElementChild;
+        if (section) container.appendChild(section);
+        renderMaterialList(i);
+        renderTmpList(i);
+      });
+    }
+
+    function filterOther(jobIndex) {
+      currentJobIndex = jobIndex;
+      const searchInput = document.getElementById('searchOther-' + jobIndex);
+      const list = document.getElementById('suggestionList-' + jobIndex);
+      selectedSuggestionIndex = -1;
+      if (!searchInput || !list) { hideSuggestions(); return; }
+
+      const term = searchInput.value.toLowerCase().trim();
+      if (!term) { hideSuggestions(); return; }
+
+      currentSuggestions = allMaterials
+        .filter(m => m.Item.toLowerCase().includes(term) || m.SKU.toLowerCase().includes(term))
+        .slice(0, 15);
+
+      if (!currentSuggestions.length) { hideSuggestions(); return; }
+
+      list.innerHTML = currentSuggestions.map((m, i) =>
+        '<li id="sug-' + jobIndex + '-' + i + '" class="px-5 py-3 cursor-pointer flex items-center gap-3 text-sm border-b border-gray-50 last:border-0 hover:bg-blue-50" onmousedown="event.preventDefault()" onclick="selectSuggestion(' + i + ', ' + jobIndex + ')">' +
+          '<span style="font-family:monospace;font-size:0.68rem;color:#bbb;width:5.5rem;flex-shrink:0">' + m.SKU + '</span>' +
+          '<span style="flex:1;font-weight:500;color:#111827">' + m.Item + '</span>' +
+          '<span style="font-size:0.72rem;color:#9ca3af;flex-shrink:0;margin-left:8px">' + m.Unit + '</span>' +
+        '</li>'
+      ).join('');
+      list.classList.remove('hidden');
+    }
+
+    function hideSuggestions() {
+      document.querySelectorAll('[id^="suggestionList-"]').forEach(el => el.classList.add('hidden'));
+      currentSuggestions = [];
+      selectedSuggestionIndex = -1;
+    }
+
+    function highlightSuggestion() {
+      const list = document.getElementById('suggestionList-' + currentJobIndex);
+      if (!list) return;
+      Array.from(list.querySelectorAll('li')).forEach((li, i) => {
+        li.style.background = i === selectedSuggestionIndex ? '#EFF6FF' : '';
+      });
+      const active = document.getElementById('sug-' + currentJobIndex + '-' + selectedSuggestionIndex);
+      if (active) active.scrollIntoView({ block: 'nearest' });
+    }
+
+    function handleSearchKey(e, jobIndex) {
+      currentJobIndex = jobIndex;
+      const list = document.getElementById('suggestionList-' + jobIndex);
+      const open = list && !list.classList.contains('hidden');
+      const count = currentSuggestions.length;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!open) return;
+        selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, count - 1);
+        highlightSuggestion();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!open) return;
+        selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+        highlightSuggestion();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (open && selectedSuggestionIndex >= 0) selectSuggestion(selectedSuggestionIndex, jobIndex);
+        else addSearchedItem(jobIndex);
+      } else if (e.key === 'Escape') {
+        hideSuggestions();
+      }
+    }
+
+    function selectSuggestion(index, jobIndex) {
+      currentJobIndex = jobIndex;
+      const m = currentSuggestions[index];
+      if (!m) return;
+      hideSuggestions();
+      const input = document.getElementById('searchOther-' + jobIndex);
+      if (input) input.value = '';
+      openQtyModal(m);
+    }
+
+    function addSearchedItem(jobIndex) {
+      currentJobIndex = jobIndex;
+      if (currentSuggestions.length > 0) {
+        const idx = selectedSuggestionIndex >= 0 ? selectedSuggestionIndex : 0;
+        selectSuggestion(idx, jobIndex);
+        return;
+      }
+
+      const input = document.getElementById('searchOther-' + jobIndex);
+      if (!input) return;
+      const term = input.value.trim();
+      if (!term) return;
+
+      const m = allMaterials.find(x => x.Item.toLowerCase() === term.toLowerCase())
+             || allMaterials.find(x => x.Item.toLowerCase().includes(term.toLowerCase()));
+      if (m) openQtyModal(m);
+      else addItemToList('—', term, '—', 1, null, jobIndex);
+
+      input.value = '';
+      hideSuggestions();
+    }
+
+    function openQtyModal(m) {
+      pendingItem = m;
+      document.getElementById('qtyModalTitle').textContent = m.Item;
+      document.getElementById('qtyModalSku').textContent = m.SKU;
+      document.getElementById('qtyModalUnit').textContent = m.Unit;
+      document.getElementById('qtyModalQty').value = '1';
+      document.getElementById('qtyModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('qtyModalQty').select(), 50);
+    }
+
+    function closeQtyModal() {
+      document.getElementById('qtyModal').classList.add('hidden');
+      pendingItem = null;
+    }
+
+    function confirmQtyModal() {
+      if (!pendingItem) return;
+      const qty = parseFloat(document.getElementById('qtyModalQty').value) || 1;
+      addItemToList(pendingItem.SKU, pendingItem.Item, pendingItem.Unit, qty, pendingItem.Price, currentJobIndex);
+      closeQtyModal();
+    }
+
+    function addItemToList(sku, itemName, unit, qty, price, jobIndex = currentJobIndex) {
+      const job = jobs[jobIndex];
+      if (!job) return;
+      qty = qty || 1;
+      price = (price !== undefined) ? price : null;
+      const existing = job.addedItems.find(i => i.SKU === sku && i.Item === itemName);
+      if (existing) {
+        existing.Qty += qty;
+        renderMaterialList(jobIndex);
+        focusSearch(jobIndex);
+        return;
+      }
+      job.addedItems.push({ SKU: sku, Item: itemName, Unit: unit, Qty: qty, Price: price });
+      renderMaterialList(jobIndex);
+      focusSearch(jobIndex);
+    }
+
+    function focusSearch(jobIndex) {
+      const input = document.getElementById('searchOther-' + jobIndex);
+      if (input) input.focus();
+    }
+
+    function removeItem(jobIndex, index) {
+      const job = jobs[jobIndex];
+      if (!job) return;
+      job.addedItems.splice(index, 1);
+      renderMaterialList(jobIndex);
+      focusSearch(jobIndex);
+    }
+
+    function updateQty(jobIndex, index, value) {
+      const job = jobs[jobIndex];
+      if (!job) return;
+      job.addedItems[index].Qty = parseFloat(value) || 0;
+      renderMaterialList(jobIndex);
+    }
+
+    function updatePrice(jobIndex, index, value) {
+      const job = jobs[jobIndex];
+      if (!job) return;
+      job.addedItems[index].Price = parseFloat(value) || 0;
+      renderMaterialList(jobIndex);
+    }
+
+    function renderMaterialList(jobIndex) {
+      const job = jobs[jobIndex];
+      const tbody = document.getElementById('materialListBody-' + jobIndex);
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (!job.addedItems.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No items added yet. Search and add materials above.</td></tr>';
+        return;
+      }
+      job.addedItems.forEach((item, i) => {
+        const total = (item.Qty * (item.Price || 0)).toFixed(2);
+        const row = document.createElement('tr');
+        row.className = 'table-row';
+        row.innerHTML = `
+          <td class="table-cell">${item.SKU}</td>
+          <td class="table-cell">${item.Item}</td>
+          <td class="table-cell">${item.Unit}</td>
+          <td class="table-cell"><input type="number" value="${item.Qty}" onchange="updateQty(${jobIndex}, ${i}, this.value)"></td>
+          <td class="table-cell"><input type="number" step="0.01" value="${item.Price || ''}" onchange="updatePrice(${jobIndex}, ${i}, this.value)"></td>
+          <td class="table-cell total-cell">$${total}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function generatePDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const customer = document.getElementById('customer').value || 'Customer';
+      const address = document.getElementById('address').value || '';
+      const date = document.getElementById('date').value || new Date().toLocaleDateString();
+      const notes = document.getElementById('notes').value || '';
+
+      doc.setFontSize(20); doc.text('Job Costing', 20, 20);
+      doc.setFontSize(12);
+      doc.text('Customer: ' + customer, 20, 35);
+      doc.text('Address: ' + address, 20, 42);
+      doc.text('Date: ' + date, 20, 49);
+
+      let y = 56;
+      for (let index = 0; index < jobs.length; index++) {
+        const scopeText = document.getElementById('scope-' + index)?.value || '';
+        if (scopeText) {
+          const sl = doc.splitTextToSize('Scope: ' + scopeText, 170);
+          doc.text(sl, 20, y);
+          y += sl.length * 7 + 4;
+        }
+
+        doc.setFontSize(12); doc.setFont(undefined, 'bold');
+        doc.text('Job ' + (index + 1) + ' Materials', 20, y); y += 8;
+        doc.setFontSize(9); doc.setFont(undefined, 'normal');
+        y = drawHeader(doc, y);
+
+        let matTotal = 0;
+        let matHasNA = false;
+        const job = jobs[index];
+        if (!job.addedItems.length) {
+          doc.text('No items added.', 20, y); y += 8;
+        } else {
+          job.addedItems.forEach(item => {
+            if (y > 272) { doc.addPage(); y = 20; y = drawHeader(doc, y); }
+            y = drawRow(doc, item, y);
+            if (item.Price !== null && item.Price !== undefined) matTotal += item.Price * item.Qty;
+            else matHasNA = true;
+          });
+          y += 3; doc.line(130, y, 190, y); y += 5;
+          doc.setFont(undefined, 'bold'); doc.setFontSize(9);
+          doc.text('Subtotal:', 130, y);
+          doc.text(matTotal.toFixed(2) + (matHasNA ? ' + N/A' : ''), 190, y, { align: 'right' });
+          doc.setFont(undefined, 'normal'); y += 8;
+        }
+
+        if (job.tmpItems.length) {
+          y += 4;
+          if (y > 255) { doc.addPage(); y = 20; }
+          doc.setFontSize(12); doc.setFont(undefined, 'bold'); doc.text('Items Not Listed', 20, y); y += 8;
+          doc.setFontSize(9); doc.setFont(undefined, 'normal');
+          y = drawHeader(doc, y);
+          job.tmpItems.forEach(item => {
+            if (y > 272) { doc.addPage(); y = 20; y = drawHeader(doc, y); }
+            y = drawRow(doc, item, y);
+          });
+          y += 8;
+        }
+
+        if (index < jobs.length - 1) {
+          y += 8;
+          if (y > 255) { doc.addPage(); y = 20; }
+        }
+      }
+
+      if (notes) {
+        if (y > 255) { doc.addPage(); y = 20; }
+        doc.setFont(undefined, 'bold'); doc.text('Notes:', 20, y); doc.setFont(undefined, 'normal'); y += 7;
+        doc.text(doc.splitTextToSize(notes, 170), 20, y);
+      }
+
+      const blob = doc.output('blob');
+      const filename = 'Material_List_' + customer.replace(/ /g, '_') + '_' + date + '.pdf';
+      const file = new File([blob], filename, { type: 'application/pdf' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: 'Material List PDF' }).catch(err => console.log('Share failed', err));
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    function drawHeader(doc, yy) {
+      doc.setFontSize(9); doc.setFont(undefined, 'bold');
+      doc.text('SKU', 20, yy);
+      doc.text('Qty', 60, yy);
+      doc.text('Unit', 75, yy);
+      doc.text('Item', 95, yy);
+      doc.text('Price (TTD)', 190, yy, { align: 'right' });
+      doc.setFont(undefined, 'normal');
+      yy += 4; doc.line(20, yy, 190, yy); yy += 5;
+      return yy;
+    }
+
+    function drawRow(doc, item, yy) {
+      doc.setFontSize(9);
+      doc.text(String(item.SKU), 20, yy);
+      doc.text(String(item.Qty), 60, yy);
+      doc.text(String(item.Unit), 75, yy);
+      doc.text(item.Item.substring(0, 42), 95, yy);
+      doc.text((item.Price !== null && item.Price !== undefined) ? (item.Price * item.Qty).toFixed(2) : 'N/A', 190, yy, { align: 'right' });
+      return yy + 7;
+    }
+
+    function exportCSV() {
+      const customer = document.getElementById('customer').value || 'Customer';
+      const address = document.getElementById('address').value || '';
+      const date = document.getElementById('date').value || new Date().toISOString().split('T')[0];
+      const notes = document.getElementById('notes').value || '';
+      const esc = v => '"' + String(v).replace(/"/g, '""') + '"';
+      const rows = [
+        ['Material List Export'],
+        ['Customer', customer],
+        ['Address', address],
+        ['Date', date],
+        []
+      ];
+
+      jobs.forEach((job, index) => {
+        rows.push(['Job ' + (index + 1)]);
+        rows.push(['Scope', document.getElementById('scope-' + index)?.value || '']);
+        rows.push([]);
+        rows.push(['MATERIALS']);
+        rows.push(['SKU', 'Qty', 'Unit', 'Item', 'Price (TTD)']);
+        job.addedItems.forEach(m => rows.push([m.SKU, m.Qty, m.Unit, m.Item, (m.Price !== null && m.Price !== undefined) ? (m.Price * m.Qty).toFixed(2) : 'N/A']));
+        rows.push([]);
+        rows.push(['ITEMS NOT LISTED']);
+        rows.push(['SKU', 'Qty', 'Unit', 'Item', 'Price (TTD)']);
+        job.tmpItems.forEach(m => rows.push([m.SKU, m.Qty, m.Unit, m.Item, 'N/A']));
+        rows.push([]);
+      });
+
+      rows.push(['Notes', notes]);
+      const csv = rows.map(r => r.map(esc).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const filename = 'Costing - ' + customer.replace(/ /g, '-') + '-' + date + '.csv';
+      const file = new File([blob], filename, { type: 'text/csv' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: 'Material List CSV' }).catch(err => console.log('Share failed', err));
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    function nextTmpSku() {
+      const allItems = jobs.flatMap(job => job.tmpItems);
+      if (!allItems.length) return 'TMP-001';
+      const nums = allItems.map(t => {
+        const m = t.SKU.match(/TMP-(\d+)/);
+        return m ? parseInt(m[1]) : 0;
+      });
+      return 'TMP-' + String(Math.max(...nums) + 1).padStart(3, '0');
+    }
+
+    function openAddModal(jobIndex) {
+      currentJobIndex = jobIndex;
+      document.getElementById('modalItemName').value = '';
+      document.getElementById('modalUnit').value = '';
+      document.getElementById('modalQty').value = '1';
+      document.getElementById('modalPrice').value = '';
+      document.getElementById('modalSkuPreview').textContent = nextTmpSku();
+      document.getElementById('addModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('modalItemName').focus(), 50);
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.add('hidden');
+    }
+
+    function confirmAddModal() {
+      const name = document.getElementById('modalItemName').value.trim();
+      if (!name) {
+        document.getElementById('modalItemName').classList.add('border-red-400');
+        document.getElementById('modalItemName').focus();
+        return;
+      }
+      document.getElementById('modalItemName').classList.remove('border-red-400');
+      const unit = document.getElementById('modalUnit').value.trim() || 'each';
+      const qty = parseFloat(document.getElementById('modalQty').value) || 1;
+      const price = parseFloat(document.getElementById('modalPrice').value) || null;
+      const sku = nextTmpSku();
+      jobs[currentJobIndex].tmpItems.push({ SKU: sku, Item: name, Unit: unit, Qty: qty, Price: price });
+      renderTmpList(currentJobIndex);
+      closeAddModal();
+    }
+
+    function removeTmpItem(jobIndex, index) {
+      const job = jobs[jobIndex];
+      if (!job) return;
+      job.tmpItems.splice(index, 1);
+      renderTmpList(jobIndex);
+    }
+
+    function updateTmpQty(jobIndex, index, value) {
+      const job = jobs[jobIndex];
+      if (!job) return;
+      job.tmpItems[index].Qty = parseFloat(value) || 0;
+      renderTmpList(jobIndex);
+    }
+
+    function updateTmpPrice(jobIndex, index, value) {
+      const job = jobs[jobIndex];
+      if (!job) return;
+      job.tmpItems[index].Price = parseFloat(value) || 0;
+      renderTmpList(jobIndex);
+    }
+
+    function renderTmpList(jobIndex) {
+      const job = jobs[jobIndex];
+      const tbody = document.getElementById('tmpListBody-' + jobIndex);
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (!job.tmpItems.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No unlisted items added yet. Click "Add New Item" to add one.</td></tr>';
+        return;
+      }
+      job.tmpItems.forEach((item, i) => {
+        const total = (item.Qty * (item.Price || 0)).toFixed(2);
+        const row = document.createElement('tr');
+        row.className = 'item-row';
+        row.innerHTML = `
+          <td class="item-cell">${item.SKU}</td>
+          <td class="item-cell">${item.Item}</td>
+          <td class="item-cell">${item.Unit}</td>
+          <td class="item-cell"><input type="number" value="${item.Qty}" onchange="updateTmpQty(${jobIndex}, ${i}, this.value)"></td>
+          <td class="item-cell"><input type="number" step="0.01" value="${item.Price || ''}" onchange="updateTmpPrice(${jobIndex}, ${i}, this.value)"></td>
+          <td class="item-cell total-cell">$${total}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeAddModal();
+        closeQtyModal();
+      }
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('[id^="searchOther-"]') && !e.target.closest('[id^="suggestionList-"]'))
+        hideSuggestions();
+    });
+
+    window.onload = () => {
+      document.getElementById('date').value = new Date().toISOString().split('T')[0];
+      loadMaterials();
+    };
+  </script>
+</body>
+</html>
