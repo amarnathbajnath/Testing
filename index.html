@@ -136,7 +136,13 @@
           </div>
           <div>
             <label class="modal-label">QUANTITY</label>
-            <input id="modalQty" type="number" value="1" min="0" step="any"
+            <input id="modalQty" type="number" min="0" step="any"
+                   class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
+                   onkeydown="if(event.key==='Enter') confirmAddModal()">
+          </div>
+          <div>
+            <label class="modal-label">UNIT PRICE</label>
+            <input id="modalUnitPrice" type="number" value="0.00" min="0" step="0.01"
                    class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
                    onkeydown="if(event.key==='Enter') confirmAddModal()">
           </div>
@@ -728,7 +734,8 @@
     function openAddModal(jobIndex) {
       currentJobIndex = jobIndex;
       document.getElementById('modalItemName').value = '';
-      document.getElementById('modalQty').value = '1';
+      document.getElementById('modalQty').value = '';
+      document.getElementById('modalUnitPrice').value = '0.00';
       document.getElementById('modalSkuPreview').textContent = nextTmpSku();
       document.getElementById('addModal').classList.remove('hidden');
       setTimeout(() => document.getElementById('modalItemName').focus(), 50);
@@ -746,9 +753,10 @@
         return;
       }
       document.getElementById('modalItemName').classList.remove('border-red-400');
-      const qty = parseFloat(document.getElementById('modalQty').value) || 1;
+      const qty = parseFloat(document.getElementById('modalQty').value) || 0;
+      const price = parseFloat(document.getElementById('modalUnitPrice').value) || 0;
       const sku = nextTmpSku();
-      jobs[currentJobIndex].tmpItems.push({ SKU: sku, Item: name, Unit: 'each', Qty: qty });
+      jobs[currentJobIndex].tmpItems.push({ SKU: sku, Item: name, Unit: 'each', Qty: qty, Price: price });
       renderTmpList(currentJobIndex);
       closeAddModal();
     }
