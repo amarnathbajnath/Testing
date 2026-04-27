@@ -72,14 +72,15 @@
               <thead class="table-header">
                 <tr>
                   <th class="text-left p-4 font-medium w-28">SKU</th>
-                  <th class="text-center p-4 font-medium w-28">Qty</th>
-                  <th class="text-left p-4 font-medium w-24">Unit</th>
-                  <th class="text-left p-4 font-medium">Item</th>
-                  <th class="text-center p-4 font-medium w-20">Remove</th>
+                  <th class="text-center p-4 font-medium w-28">QTY</th>
+                  <th class="text-left p-4 font-medium w-24">UNIT</th>
+                  <th class="text-left p-4 font-medium">ITEM</th>
+                  <th class="text-center p-4 font-medium w-28">PRICE</th>
+                  <th class="text-center p-4 font-medium w-20">REMOVE</th>
                 </tr>
               </thead>
               <tbody id="materialListBody-0">
-                <tr><td colspan="5" class="p-8 text-center text-gray-400 italic">No items added yet. Search and add materials above.</td></tr>
+                <tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No items added yet. Search and add materials above.</td></tr>
               </tbody>
             </table>
           </div>
@@ -98,14 +99,15 @@
               <thead class="table-header">
                 <tr>
                   <th class="text-left p-4 font-medium w-28">SKU</th>
-                  <th class="text-center p-4 font-medium w-28">Qty</th>
-                  <th class="text-left p-4 font-medium w-24">Unit</th>
-                  <th class="text-left p-4 font-medium">Item</th>
-                  <th class="text-center p-4 font-medium w-20">Remove</th>
+                  <th class="text-center p-4 font-medium w-28">QTY</th>
+                  <th class="text-left p-4 font-medium w-24">UNIT</th>
+                  <th class="text-left p-4 font-medium">ITEM</th>
+                  <th class="text-center p-4 font-medium w-28">PRICE</th>
+                  <th class="text-center p-4 font-medium w-20">REMOVE</th>
                 </tr>
               </thead>
               <tbody id="tmpListBody-0" class="divide-y">
-                <tr><td colspan="5" class="p-8 text-center text-gray-400 italic">No unlisted items added yet. Click "Add New Item" to add one.</td></tr>
+                <tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No unlisted items added yet. Click "Add New Item" to add one.</td></tr>
               </tbody>
             </table>
           </div>
@@ -301,14 +303,15 @@
               <thead class="table-header">
                 <tr>
                   <th class="text-left font-medium w-28">SKU</th>
-                  <th class="text-center font-medium w-28">Qty</th>
-                  <th class="text-left font-medium w-24">Unit</th>
-                  <th class="text-left font-medium">Item</th>
-                  <th class="text-center font-medium w-20">Remove</th>
+                  <th class="text-center font-medium w-28">QTY</th>
+                  <th class="text-left font-medium w-24">UNIT</th>
+                  <th class="text-left font-medium">ITEM</th>
+                  <th class="text-center font-medium w-28">PRICE</th>
+                  <th class="text-center font-medium w-20">REMOVE</th>
                 </tr>
               </thead>
               <tbody id="materialListBody-${jobIndex}">
-                <tr><td colspan="5" class="p-8 text-center text-gray-400 italic">No items added yet. Search and add materials above.</td></tr>
+                <tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No items added yet. Search and add materials above.</td></tr>
               </tbody>
             </table>
           </div>
@@ -326,10 +329,11 @@
               <thead class="table-header">
                 <tr>
                   <th class="text-left font-medium w-28">SKU</th>
-                  <th class="text-center font-medium w-28">Qty</th>
-                  <th class="text-left font-medium w-24">Unit</th>
-                  <th class="text-left font-medium">Item</th>
-                  <th class="text-center font-medium w-20">Remove</th>
+                  <th class="text-center font-medium w-28">QTY</th>
+                  <th class="text-left font-medium w-24">UNIT</th>
+                  <th class="text-left font-medium">ITEM</th>
+                  <th class="text-center font-medium w-28">PRICE</th>
+                  <th class="text-center font-medium w-20">REMOVE</th>
                 </tr>
               </thead>
               <tbody id="tmpListBody-${jobIndex}">
@@ -534,13 +538,6 @@
       renderMaterialList(jobIndex);
     }
 
-    function updatePrice(jobIndex, index, value) {
-      const job = jobs[jobIndex];
-      if (!job) return;
-      job.addedItems[index].Price = parseFloat(value) || 0;
-      renderMaterialList(jobIndex);
-    }
-
     function renderMaterialList(jobIndex) {
       const job = jobs[jobIndex];
       const tbody = document.getElementById('materialListBody-' + jobIndex);
@@ -551,17 +548,15 @@
         return;
       }
       job.addedItems.forEach((item, i) => {
-        const total = (item.Qty * (item.Price || 0)).toFixed(2);
+        const totalPrice = (item.Qty * (item.Price || 0)).toFixed(2);
         const row = document.createElement('tr');
-        row.className = 'table-row';
-        row.innerHTML = `
-          <td class="table-cell">${item.SKU}</td>
-          <td class="table-cell">${item.Item}</td>
-          <td class="table-cell">${item.Unit}</td>
-          <td class="table-cell"><input type="number" value="${item.Qty}" onchange="updateQty(${jobIndex}, ${i}, this.value)"></td>
-          <td class="table-cell"><input type="number" step="0.01" value="${item.Price || ''}" onchange="updatePrice(${jobIndex}, ${i}, this.value)"></td>
-          <td class="table-cell total-cell">$${total}</td>
-        `;
+        row.innerHTML =
+          '<td class="p-4" style="font-family:monospace;font-size:0.75rem;color:#9ca3af">' + item.SKU + '</td>' +
+          '<td class="p-4 text-center"><input type="number" value="' + item.Qty + '" min="0" step="any" class="w-20 text-center field-input" onchange="updateQty(' + jobIndex + ', ' + i + ', this.value)"></td>' +
+          '<td class="p-4 text-gray-300">' + item.Unit + '</td>' +
+          '<td class="p-4 font-medium text-white">' + item.Item + '</td>' +
+          '<td class="p-4 text-center font-medium text-green-400">$' + totalPrice + '</td>' +
+          '<td class="p-4 text-center"><button onclick="removeItem(' + jobIndex + ', ' + i + ')" class="text-red-400 hover:text-red-600 font-bold text-lg" title="Remove">✕</button></td>';
         tbody.appendChild(row);
       });
     }
@@ -733,9 +728,7 @@
     function openAddModal(jobIndex) {
       currentJobIndex = jobIndex;
       document.getElementById('modalItemName').value = '';
-      document.getElementById('modalUnit').value = '';
       document.getElementById('modalQty').value = '1';
-      document.getElementById('modalPrice').value = '';
       document.getElementById('modalSkuPreview').textContent = nextTmpSku();
       document.getElementById('addModal').classList.remove('hidden');
       setTimeout(() => document.getElementById('modalItemName').focus(), 50);
@@ -753,11 +746,9 @@
         return;
       }
       document.getElementById('modalItemName').classList.remove('border-red-400');
-      const unit = document.getElementById('modalUnit').value.trim() || 'each';
       const qty = parseFloat(document.getElementById('modalQty').value) || 1;
-      const price = parseFloat(document.getElementById('modalPrice').value) || null;
       const sku = nextTmpSku();
-      jobs[currentJobIndex].tmpItems.push({ SKU: sku, Item: name, Unit: unit, Qty: qty, Price: price });
+      jobs[currentJobIndex].tmpItems.push({ SKU: sku, Item: name, Unit: 'each', Qty: qty });
       renderTmpList(currentJobIndex);
       closeAddModal();
     }
@@ -776,34 +767,25 @@
       renderTmpList(jobIndex);
     }
 
-    function updateTmpPrice(jobIndex, index, value) {
-      const job = jobs[jobIndex];
-      if (!job) return;
-      job.tmpItems[index].Price = parseFloat(value) || 0;
-      renderTmpList(jobIndex);
-    }
-
     function renderTmpList(jobIndex) {
       const job = jobs[jobIndex];
       const tbody = document.getElementById('tmpListBody-' + jobIndex);
       if (!tbody) return;
       tbody.innerHTML = '';
       if (!job.tmpItems.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No unlisted items added yet. Click "Add New Item" to add one.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No unlisted items added yet. Click “Add New Item” to add one.</td></tr>';
         return;
       }
       job.tmpItems.forEach((item, i) => {
-        const total = (item.Qty * (item.Price || 0)).toFixed(2);
+        const totalPrice = (item.Qty * (item.Price || 0)).toFixed(2);
         const row = document.createElement('tr');
-        row.className = 'item-row';
-        row.innerHTML = `
-          <td class="item-cell">${item.SKU}</td>
-          <td class="item-cell">${item.Item}</td>
-          <td class="item-cell">${item.Unit}</td>
-          <td class="item-cell"><input type="number" value="${item.Qty}" onchange="updateTmpQty(${jobIndex}, ${i}, this.value)"></td>
-          <td class="item-cell"><input type="number" step="0.01" value="${item.Price || ''}" onchange="updateTmpPrice(${jobIndex}, ${i}, this.value)"></td>
-          <td class="item-cell total-cell">$${total}</td>
-        `;
+        row.innerHTML =
+          '<td class="p-4" style="font-family:monospace;font-size:0.75rem;color:#9ca3af">' + item.SKU + '</td>' +
+          '<td class="p-4 text-center"><input type="number" value="' + item.Qty + '" min="0" step="any" class="w-20 text-center field-input" onchange="updateTmpQty(' + jobIndex + ', ' + i + ', this.value)"></td>' +
+          '<td class="p-4 text-gray-300">' + item.Unit + '</td>' +
+          '<td class="p-4 font-medium text-white">' + item.Item + '</td>' +
+          '<td class="p-4 text-center font-medium text-green-400">$' + totalPrice + '</td>' +
+          '<td class="p-4 text-center"><button onclick="removeTmpItem(' + jobIndex + ', ' + i + ')" class="text-red-400 hover:text-red-600 font-bold text-lg" title="Remove">&#x2715;</button></td>';
         tbody.appendChild(row);
       });
     }
