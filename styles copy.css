@@ -193,8 +193,9 @@ select:focus {
 } */
 
   .summary-bar {
-    position: relative; bottom: 0; left: 0; right: 0;
-    background: linear-gradient(90deg, var(--navy2) 0%, #0a1628 100%);
+    /* position: relative; bottom: 0; left: 0; right: 0; */
+    /* background: linear-gradient(90deg, var(--navy2) 0%, #0a1628 100%); */
+    background: #0a1628 100%;
     border-top: 2px solid var(--gold);
     border-bottom: 1px solid rgba(249, 168, 37, 0.3);
     padding: 12px 32px;
@@ -203,8 +204,9 @@ select:focus {
   }
 
   .summary-bar-2 {
-    position: sticky; bottom: 0; left: 0; right: 0;
-    background: linear-gradient(90deg, var(--navy2) 0%, #0a1628 100%);
+    position: relative; bottom: 0; left: 0; right: 0;
+    /* background: linear-gradient(90deg, var(--navy2) 0%, #0a1628 100%); */
+    background: #0a1628 100%;
     border-top: 2px solid var(--gold);
     border-bottom: 1px solid rgba(249, 168, 37, 0.3);
     padding: 12px 32px;
@@ -217,6 +219,7 @@ select:focus {
 .section-header {
   border-top: 2px solid var(--gold);
   border-bottom: 1px solid rgba(249, 168, 37, 0.3);
+  background: #0a1628 100%;
   /* background: linear-gradient(90deg, #0a1628 100%);  
   padding: 12px 20px;
   display: flex;
@@ -227,7 +230,8 @@ select:focus {
 }
 
 .table-panel {
-  background: var(--navy2);
+  /* background: var(--navy2); */
+  background: #0a1628 100%;
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 1.5rem;
   border-top: 2px solid var(--gold);
