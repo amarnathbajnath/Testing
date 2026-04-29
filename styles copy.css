@@ -341,7 +341,7 @@ select:focus {
 
 .suggestion-list li:hover,
 .suggestion-list li.active {
-  background: rgba(30,136,229,0.08);
+  background: rgba(30, 136, 229, 0.498);
 }
 
 .modal-card {
