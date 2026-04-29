@@ -1,21 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Job Costing Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="styles copy.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap');
-    body { font-family: 'Barlow', sans-serif; }
-    #scope { min-height: 7.5rem; resize: vertical; }
+
+    body {
+      font-family: 'Barlow', sans-serif;
+    }
+
+    #scope {
+      min-height: 7.5rem;
+      resize: vertical;
+    }
   </style>
 </head>
+
 <body class="min-h-screen pb-12 app-shell">
-  <div class="max-w-6xl mx-auto p-6 app-container">
+  <div class="max-w-6xl mx-auto p-4 app-container">
     <div class="flex justify-between items-center mb-8 page-header">
       <div>
         <h1 class="text-3xl font-semibold title-white">⚡Job Costing Dashboard⚡</h1>
@@ -28,14 +40,16 @@
     </div>
 
     <!-- Job Details -->
-    <div class="rounded-2xl shadow p-6 mb-6 grid grid-cols-1 md:grid-cols-3 gap-6 panel">
+    <div class="section-header rounded-3xl shadow p-4 mb-8 grid grid-cols-1 md:grid-cols-3 gap-6 panel">
       <div>
         <label class="field-label">CUSTOMER NAME</label>
-        <input id="customer" type="text" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input" placeholder="John Smith">
+        <input id="customer" type="text" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
+          placeholder="John Smith">
       </div>
       <div>
         <label class="field-label">ADDRESS</label>
-        <input id="address" type="text" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input" placeholder="123 Main Road, Chaguanas">
+        <input id="address" type="text" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
+          placeholder="123 Main Road, Chaguanas">
       </div>
       <div>
         <label class="field-label">DATE</label>
@@ -46,23 +60,25 @@
     <div id="jobSections">
       <div class="job-section" data-job-index="0">
         <!-- Scope (standalone, 5-line expandable) -->
-        <div class="rounded-2xl shadow p-6 mb-8 panel">
+        <div class="section-header rounded-3xl shadow p-4 mb-8 panel">
           <div class="flex justify-between items-center mb-2">
             <label class="block text-xl font-bold title-white">SCOPE</label>
-            <button onclick="removeSection(0)" class="text-red-500 hover:text-red-700 font-medium text-sm" title="Remove Section">✕</button>
+            <button onclick="removeSection(0)" class="text-red-500 hover:text-red-700 font-medium text-sm"
+              title="Remove Section">✕</button>
           </div>
-          <textarea id="scope-0" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input" placeholder="Describe the scope of this job..."></textarea>
+          <textarea id="scope-0" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
+            placeholder="Describe the scope of this job..."></textarea>
         </div>
 
         <!-- MATERIAL LIST -->
-        <div class="rounded-3xl shadow mb-10 table-panel">
-          <div class="px-6 pt-4 pb-0">
+        <div class="rounded-3xl shadow mb-8 table-panel">
+          <div class="px-4 pt-4 pb-0">
             <h2 class="font-semibold text-xl mb-3 title-white">MATERIAL LIST</h2>
             <!-- Search row + dropdown — all in one relative container so dropdown isn't clipped -->
             <div class="relative pb-4 border-b">
               <input id="searchOther-0" type="text" placeholder="Search by item name or SKU..."
-                     class="w-full rounded-2xl px-5 py-3 focus:outline-none field-input"
-                     oninput="filterOther(0)" onkeydown="handleSearchKey(event, 0)" autocomplete="off">
+                class="w-full rounded-2xl px-5 py-3 focus:outline-none field-input" oninput="filterOther(0)"
+                onkeydown="handleSearchKey(event, 0)" autocomplete="off">
               <ul id="suggestionList-0" class="suggestion-list hidden" style="top:100%;"></ul>
             </div>
           </div>
@@ -80,15 +96,18 @@
                 </tr>
               </thead>
               <tbody id="materialListBody-0">
-                <tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No items added yet. Search and add materials above.</td></tr>
+                <tr>
+                  <td colspan="6" class="p-8 text-center text-gray-400 italic">No items added yet. Search and add
+                    materials above.</td>
+                </tr>
               </tbody>
             </table>
           </div>
         </div>
 
         <!-- ITEMS NOT LISTED -->
-        <div class="rounded-3xl shadow mb-10 panel">
-          <div class="px-6 py-4 border-b flex items-center justify-between">
+        <div class="section-header rounded-3xl shadow mb-8 panel">
+          <div class="px-4 py-4 border-b flex items-center justify-between">
             <h2 class="font-semibold text-xl title-white">ITEMS NOT LISTED</h2>
             <button onclick="openAddModal(0)" class="btn-primary px-6 py-2.5">
               + Add New Item
@@ -107,7 +126,10 @@
                 </tr>
               </thead>
               <tbody id="tmpListBody-0" class="divide-y">
-                <tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No unlisted items added yet. Click "Add New Item" to add one.</td></tr>
+                <tr>
+                  <td colspan="6" class="p-8 text-center text-gray-400 italic">No unlisted items added yet. Click "Add
+                    New Item" to add one.</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -115,8 +137,9 @@
       </div>
     </div>
 
-    <div id="addNewSectionContainer" class="mb-10">
-      <button id="addNewSectionBtn" onclick="addNewSection()" class="btn-primary w-full max-w-xs mx-auto block text-center">
+    <div id="addNewSectionContainer" class="mb-8">
+      <button id="addNewSectionBtn" onclick="addNewSection()"
+        class="btn-primary w-full max-w-xs mx-auto block text-center px-6 py-2.5">
         + Add New Section
       </button>
     </div>
@@ -129,22 +152,20 @@
         <div class="space-y-4">
           <div>
             <label class="modal-label">ITEM NAME <span class="text-accent">*</span></label>
-            <input id="modalItemName" type="text"
-                   class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
-                   placeholder="e.g. Custom conduit fitting"
-                   onkeydown="if(event.key==='Enter') confirmAddModal()">
+            <input id="modalItemName" type="text" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
+              placeholder="e.g. Custom conduit fitting" onkeydown="if(event.key==='Enter') confirmAddModal()">
           </div>
           <div>
             <label class="modal-label">QUANTITY</label>
             <input id="modalQty" type="number" min="0" step="any"
-                   class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
-                   onkeydown="if(event.key==='Enter') confirmAddModal()">
+              class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
+              onkeydown="if(event.key==='Enter') confirmAddModal()">
           </div>
           <div>
             <label class="modal-label">UNIT PRICE</label>
             <input id="modalUnitPrice" type="number" value="0.00" min="0" step="0.01"
-                   class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
-                   onkeydown="if(event.key==='Enter') confirmAddModal()">
+              class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
+              onkeydown="if(event.key==='Enter') confirmAddModal()">
           </div>
           <div class="flex gap-4">
             <div class="flex-1">
@@ -178,8 +199,8 @@
           <div>
             <label class="modal-label">QUANTITY</label>
             <input id="qtyModalQty" type="number" value="1" min="0" step="any"
-                   class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
-                   onkeydown="if(event.key==='Enter') confirmQtyModal()">
+              class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
+              onkeydown="if(event.key==='Enter') confirmQtyModal()">
           </div>
           <div class="flex gap-4">
             <div class="flex-1">
@@ -200,9 +221,22 @@
     </div>
 
     <!-- Notes -->
-    <div class="rounded-3xl shadow p-6 mb-10 panel">
+    <div class="section-header rounded-3xl shadow p-4 mb-8 panel">
       <h2 class="font-semibold text-xl mb-3 title-white">NOTES</h2>
-      <textarea id="notes" rows="5" class="w-full rounded-2xl px-5 py-4 focus:outline-none field-input" placeholder="Additional notes for this job..."></textarea>
+      <textarea id="notes" rows="5" class="w-full rounded-2xl px-5 py-4 focus:outline-none field-input"
+        placeholder="Additional notes for this job..."></textarea>
+    </div>
+
+    <!-- SUMMARY BAR -->
+    <div class="summary-bar rounded-3xl shadow p-4 mb-8">
+      <button onclick="generatePDF()"
+        class="btn btn-primary w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
+        Share PDF 📤
+      </button>
+      <button onclick="exportCSV()"
+        class="btn btn-secondary w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
+        Share CSV ➜]
+      </button>
     </div>
 
     <!-- Action Buttons -->
@@ -218,20 +252,38 @@
     </div>-->
 
     <!-- SUMMARY BAR -->
- <div class="summary-bar">
-  <button onclick="generatePDF()"
-              class="btn btn-primary w-screen font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
-        Share PDF 📤
-      </button>
+    <div class="summary-bar-2 rounded-3xl shadow p-6 mb-8">
+      <div class="sum-item">
+        <div class="sum-label">Subtotal</div>
+        <div class="sum-value" id="bar-sub">$0.00</div>
+      </div>
       <div class="sum-divider"></div>
-      <button onclick="exportCSV()"
-              class="btn btn-secondary w-screen font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
-        Share CSV ➜]
-      </button>
-  </div>
- </div>
+      <div class="sum-pct">
+        <div class="pct-row"><label>Markup %</label><input type="number" id="pct-markup" value="27.5" min="0" max="100"
+            oninput="recalcSummary()" />%</div>
+        <div class="pct-row"><label>VAT %</label><input type="number" id="pct-vat" value="12.5" min="0" max="100"
+            oninput="recalcSummary()" />%</div>
+      </div>
+      <div class="sum-divider"></div>
+      <div class="sum-item">
+        <div class="sum-label">Markup</div>
+        <div class="sum-value" id="bar-markup">$0.00</div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-label">VAT</div>
+        <div class="sum-value" id="bar-vat">$0.00</div>
+      </div>
+      <div class="sum-divider"></div>
+      <div class="sum-item">
+        <div class="sum-label">Total Quoted</div>
+        <div class="sum-value total" id="bar-total">$0.00</div>
+      </div>
+    </div>
+
 
   </div>
+
+  <!-- </div> -->
 
   <script>
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQF-dVNCimVYFht-LgwEeKT4rEtW-IDphibc5oSV60YBjLxGn4KGT45nU2U58EfBCYbF0UdDxdoe88r/pub?gid=0&single=true&output=csv";
@@ -404,9 +456,9 @@
 
       list.innerHTML = currentSuggestions.map((m, i) =>
         '<li id="sug-' + jobIndex + '-' + i + '" class="px-5 py-3 cursor-pointer flex items-center gap-3 text-sm border-b border-gray-50 last:border-0 hover:bg-blue-50" onmousedown="event.preventDefault()" onclick="selectSuggestion(' + i + ', ' + jobIndex + ')">' +
-          '<span style="font-family:monospace;font-size:0.68rem;color:#bbb;width:5.5rem;flex-shrink:0">' + m.SKU + '</span>' +
-          '<span style="flex:1;font-weight:500;color:#111827">' + m.Item + '</span>' +
-          '<span style="font-size:0.72rem;color:#9ca3af;flex-shrink:0;margin-left:8px">' + m.Unit + '</span>' +
+        '<span style="font-family:monospace;font-size:0.68rem;color:#bbb;width:5.5rem;flex-shrink:0">' + m.SKU + '</span>' +
+        '<span style="flex:1;font-weight:500;color:#111827">' + m.Item + '</span>' +
+        '<span style="font-size:0.72rem;color:#9ca3af;flex-shrink:0;margin-left:8px">' + m.Unit + '</span>' +
         '</li>'
       ).join('');
       list.classList.remove('hidden');
@@ -477,7 +529,7 @@
       if (!term) return;
 
       const m = allMaterials.find(x => x.Item.toLowerCase() === term.toLowerCase())
-             || allMaterials.find(x => x.Item.toLowerCase().includes(term.toLowerCase()));
+        || allMaterials.find(x => x.Item.toLowerCase().includes(term.toLowerCase()));
       if (m) openQtyModal(m);
       else addItemToList('—', term, '—', 1, null, jobIndex);
 
@@ -535,6 +587,7 @@
       job.addedItems.splice(index, 1);
       renderMaterialList(jobIndex);
       focusSearch(jobIndex);
+      recalcSummary();
     }
 
     function updateQty(jobIndex, index, value) {
@@ -542,6 +595,7 @@
       if (!job) return;
       job.addedItems[index].Qty = parseFloat(value) || 0;
       renderMaterialList(jobIndex);
+      recalcSummary();
     }
 
     function renderMaterialList(jobIndex) {
@@ -565,115 +619,165 @@
           '<td class="p-4 text-center"><button onclick="removeItem(' + jobIndex + ', ' + i + ')" class="text-red-400 hover:text-red-600 font-bold text-lg" title="Remove">✕</button></td>';
         tbody.appendChild(row);
       });
+      recalcSummary();
     }
 
     function generatePDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       const customer = document.getElementById('customer').value || 'Customer';
-      const address = document.getElementById('address').value || '';
+      const address = document.getElementById('address').value || '—';
       const date = document.getElementById('date').value || new Date().toLocaleDateString();
       const notes = document.getElementById('notes').value || '';
+      const markupPct = parseFloat(document.getElementById('pct-markup').value) || 27.5;
+      const vatPct = parseFloat(document.getElementById('pct-vat').value) || 12.5;
 
-      doc.setFontSize(20); doc.text('Job Costing', 20, 20);
-      doc.setFontSize(12);
-      doc.text('Customer: ' + customer, 20, 35);
-      doc.text('Address: ' + address, 20, 42);
-      doc.text('Date: ' + date, 20, 49);
+      const fmt = v => '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-      let y = 56;
+      let allMatTotal = 0, allTmpTotal = 0, hasNA = false;
+      let tableRows = '';
+
       for (let index = 0; index < jobs.length; index++) {
-        const scopeText = document.getElementById('scope-' + index)?.value || '';
-        if (scopeText) {
-          const sl = doc.splitTextToSize('Scope: ' + scopeText, 170);
-          doc.text(sl, 20, y);
-          y += sl.length * 7 + 4;
-        }
-
-        doc.setFontSize(12); doc.setFont(undefined, 'bold');
-        doc.text('Job ' + (index + 1) + ' Materials', 20, y); y += 8;
-        doc.setFontSize(9); doc.setFont(undefined, 'normal');
-        y = drawHeader(doc, y);
-
-        let matTotal = 0;
-        let matHasNA = false;
         const job = jobs[index];
-        if (!job.addedItems.length) {
-          doc.text('No items added.', 20, y); y += 8;
-        } else {
+        const scopeText = document.getElementById('scope-' + index)?.value || '';
+
+        if (index > 0) tableRows += '<tr style="height:4px"><td colspan="6"></td></tr>';
+
+        if (scopeText) {
+          tableRows += `<tr><td colspan="6" style="padding:8px;background:rgba(249,168,37,0.1);font-weight:600;font-size:0.85rem;border-top:1px solid rgba(249,168,37,0.3)"><b>Scope:</b> ${scopeText}</td></tr>`;
+        }
+
+        // Materials section
+        if (job.addedItems.length > 0) {
+          tableRows += `<tr style="background:rgba(249,168,37,0.15);border-top:2px solid rgba(249,168,37,0.3)"><td colspan="6" style="padding:6px 8px;font-weight:700;font-size:0.9rem;color:#0d1b2a">Job ${index + 1} — MATERIALS</td></tr>`;
+          let secTotal = 0, secHasNA = false;
           job.addedItems.forEach(item => {
-            if (y > 272) { doc.addPage(); y = 20; y = drawHeader(doc, y); }
-            y = drawRow(doc, item, y);
-            if (item.Price !== null && item.Price !== undefined) matTotal += item.Price * item.Qty;
-            else matHasNA = true;
+            const itemTotal = item.Qty * (item.Price || 0);
+            secTotal += itemTotal;
+            if (item.Price === null || item.Price === undefined) secHasNA = true;
+            tableRows += `<tr style="border-bottom:1px solid #f0f0f0">
+              <td style="padding:6px 8px;font-size:0.8rem;color:#999;font-family:monospace">${item.SKU}</td>
+              <td style="padding:6px 8px;text-align:center;font-size:0.85rem">${item.Qty}</td>
+              <td style="padding:6px 8px;text-align:center;font-size:0.85rem">${item.Unit}</td>
+              <td style="padding:6px 8px;font-size:0.85rem">${item.Item}</td>
+              <td style="padding:6px 8px;text-align:right;font-size:0.85rem">${item.Price !== null && item.Price !== undefined ? fmt(item.Price) : 'N/A'}</td>
+              <td style="padding:6px 8px;text-align:right;font-size:0.85rem;font-weight:600">${itemTotal > 0 ? fmt(itemTotal) : 'N/A'}</td>
+            </tr>`;
           });
-          y += 3; doc.line(130, y, 190, y); y += 5;
-          doc.setFont(undefined, 'bold'); doc.setFontSize(9);
-          doc.text('Subtotal:', 130, y);
-          doc.text(matTotal.toFixed(2) + (matHasNA ? ' + N/A' : ''), 190, y, { align: 'right' });
-          doc.setFont(undefined, 'normal'); y += 8;
+          tableRows += `<tr style="background:#fafafa;font-weight:600"><td colspan="4" style="padding:6px 8px;text-align:right">Materials Subtotal:</td><td colspan="2" style="padding:6px 8px;text-align:right">${fmt(secTotal)}${secHasNA ? ' + N/A' : ''}</td></tr>`;
+          allMatTotal += secTotal;
+          if (secHasNA) hasNA = true;
         }
 
-        if (job.tmpItems.length) {
-          y += 4;
-          if (y > 255) { doc.addPage(); y = 20; }
-          doc.setFontSize(12); doc.setFont(undefined, 'bold'); doc.text('Items Not Listed', 20, y); y += 8;
-          doc.setFontSize(9); doc.setFont(undefined, 'normal');
-          y = drawHeader(doc, y);
+        // Items Not Listed section
+        if (job.tmpItems.length > 0) {
+          tableRows += `<tr style="background:rgba(21,101,192,0.15);border-top:2px solid rgba(21,101,192,0.3)"><td colspan="6" style="padding:6px 8px;font-weight:700;font-size:0.9rem;color:#0d1b2a">ITEMS NOT LISTED</td></tr>`;
+          let secTotal = 0, secHasNA = false;
           job.tmpItems.forEach(item => {
-            if (y > 272) { doc.addPage(); y = 20; y = drawHeader(doc, y); }
-            y = drawRow(doc, item, y);
+            const itemTotal = item.Qty * (item.Price || 0);
+            secTotal += itemTotal;
+            if (item.Price === null || item.Price === undefined) secHasNA = true;
+            tableRows += `<tr style="border-bottom:1px solid #f0f0f0">
+              <td style="padding:6px 8px;font-size:0.8rem;color:#999;font-family:monospace">${item.SKU}</td>
+              <td style="padding:6px 8px;text-align:center;font-size:0.85rem">${item.Qty}</td>
+              <td style="padding:6px 8px;text-align:center;font-size:0.85rem">${item.Unit}</td>
+              <td style="padding:6px 8px;font-size:0.85rem">${item.Item}</td>
+              <td style="padding:6px 8px;text-align:right;font-size:0.85rem">${item.Price !== null && item.Price !== undefined ? fmt(item.Price) : 'N/A'}</td>
+              <td style="padding:6px 8px;text-align:right;font-size:0.85rem;font-weight:600">${itemTotal > 0 ? fmt(itemTotal) : 'N/A'}</td>
+            </tr>`;
           });
-          y += 8;
-        }
-
-        if (index < jobs.length - 1) {
-          y += 8;
-          if (y > 255) { doc.addPage(); y = 20; }
+          tableRows += `<tr style="background:#fafafa;font-weight:600"><td colspan="4" style="padding:6px 8px;text-align:right">Items Subtotal:</td><td colspan="2" style="padding:6px 8px;text-align:right">${fmt(secTotal)}${secHasNA ? ' + N/A' : ''}</td></tr>`;
+          allTmpTotal += secTotal;
+          if (secHasNA) hasNA = true;
         }
       }
 
-      if (notes) {
-        if (y > 255) { doc.addPage(); y = 20; }
-        doc.setFont(undefined, 'bold'); doc.text('Notes:', 20, y); doc.setFont(undefined, 'normal'); y += 7;
-        doc.text(doc.splitTextToSize(notes, 170), 20, y);
-      }
+      const subtotal = allMatTotal + allTmpTotal;
+      const markup = subtotal * (markupPct / 100);
+      const vat = (subtotal + markup) * (vatPct / 100);
+      const total = subtotal + markup + vat;
 
-      const blob = doc.output('blob');
-      const filename = 'Material_List_' + customer.replace(/ /g, '_') + '_' + date + '.pdf';
-      const file = new File([blob], filename, { type: 'application/pdf' });
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({ files: [file], title: 'Material List PDF' }).catch(err => console.log('Share failed', err));
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    }
+      const printHTML = `
+        <div style="font-family:'Barlow',sans-serif;background:white;color:#111;padding:32px;max-width:900px;margin:0 auto">
+          <div style="text-align:center;margin-bottom:24px;border-bottom:2px solid #0d1b2a;padding-bottom:12px">
+            <h1 style="margin:0;font-size:1.8rem;color:#0d1b2a;font-family:'Barlow Condensed',sans-serif">⚡ JOB COSTING SUMMARY</h1>
+            <p style="margin:4px 0 0 0;color:#666;font-size:0.9rem">Risha Vishal Electrical &amp; Construction Co. Ltd.</p>
+          </div>
+          
+          <table style="width:100%;margin-bottom:16px;border-collapse:collapse;font-size:0.9rem">
+            <tr><td style="padding:4px"><b>Customer:</b> ${customer}</td><td style="padding:4px"><b>Date:</b> ${date}</td></tr>
+            <tr><td style="padding:4px"><b>Address:</b> ${address}</td><td style="padding:4px"></td></tr>
+          </table>
+          
+          <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:0.85rem">
+            <thead><tr style="background:#0d1b2a;color:white">
+              <th style="padding:8px;text-align:left;font-weight:700;border-right:1px solid #ddd;width:12%">SKU</th>
+              <th style="padding:8px;text-align:center;font-weight:700;border-right:1px solid #ddd;width:8%">Qty</th>
+              <th style="padding:8px;text-align:center;font-weight:700;border-right:1px solid #ddd;width:12%">Unit</th>
+              <th style="padding:8px;text-align:left;font-weight:700;border-right:1px solid #ddd;width:40%">Item</th>
+              <th style="padding:8px;text-align:right;font-weight:700;border-right:1px solid #ddd;width:14%">Unit Price</th>
+              <th style="padding:8px;text-align:right;font-weight:700;width:14%">Total</th>
+            </tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+          
+          <table style="width:100%;max-width:400px;margin-left:auto;margin-right:0;border-collapse:collapse;font-size:0.9rem;border:1px solid #ddd">
+            <tr><td style="padding:8px 12px"><b>Subtotal:</b></td><td style="padding:8px 12px;text-align:right;font-weight:600;border-left:1px solid #ddd">${fmt(subtotal)}${hasNA ? ' + N/A' : ''}</td></tr>
+            <tr style="background:#f8f8f8"><td style="padding:8px 12px"><b>Markup (${markupPct}%):</b></td><td style="padding:8px 12px;text-align:right;border-left:1px solid #ddd">${fmt(markup)}</td></tr>
+            <tr><td style="padding:8px 12px"><b>VAT/Tax (${vatPct}%):</b></td><td style="padding:8px 12px;text-align:right;font-weight:600;border-left:1px solid #ddd">${fmt(vat)}</td></tr>
+            <tr style="background:#0d1b2a;color:#f9a825;font-weight:700;font-size:1rem"><td style="padding:10px 12px">TOTAL QUOTED:</td><td style="padding:10px 12px;text-align:right;border-left:1px solid #666">${fmt(total)}${hasNA ? ' + N/A' : ''}</td></tr>
+          </table>
+          ${notes ? `<div style="margin-top:24px;padding:12px;background:#f8f8f8;border-left:4px solid #f9a825;font-size:0.85rem"><b>Notes:</b><br/>${notes.replace(/\n/g, '<br/>')}</div>` : ''}
+          <p style="margin-top:24px;font-size:0.75rem;color:#999;text-align:center;border-top:1px solid #ddd;padding-top:12px">Generated on ${new Date().toLocaleDateString()} | Job Costing Dashboard</p>
+        </div>
+      `;
 
-    function drawHeader(doc, yy) {
-      doc.setFontSize(9); doc.setFont(undefined, 'bold');
-      doc.text('SKU', 20, yy);
-      doc.text('Qty', 60, yy);
-      doc.text('Unit', 75, yy);
-      doc.text('Item', 95, yy);
-      doc.text('Price (TTD)', 190, yy, { align: 'right' });
-      doc.setFont(undefined, 'normal');
-      yy += 4; doc.line(20, yy, 190, yy); yy += 5;
-      return yy;
-    }
+      // Create a temporary element to hold the HTML
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = printHTML;
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-10000px';
+      tempDiv.style.top = '0';
+      tempDiv.style.opacity = '1';
+      tempDiv.style.pointerEvents = 'none';
+      tempDiv.style.zIndex = '-9999';
+      document.body.appendChild(tempDiv);
 
-    function drawRow(doc, item, yy) {
-      doc.setFontSize(9);
-      doc.text(String(item.SKU), 20, yy);
-      doc.text(String(item.Qty), 60, yy);
-      doc.text(String(item.Unit), 75, yy);
-      doc.text(item.Item.substring(0, 42), 95, yy);
-      doc.text((item.Price !== null && item.Price !== undefined) ? (item.Price * item.Qty).toFixed(2) : 'N/A', 190, yy, { align: 'right' });
-      return yy + 7;
+      // Wait for rendering and use html2canvas
+      setTimeout(() => {
+        html2canvas(tempDiv, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: 'white',
+          letterRendering: true
+        }).then(canvas => {
+          document.body.removeChild(tempDiv);
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = 190;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+          // Add image to PDF
+          doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+
+          const blob = doc.output('blob');
+          const filename = 'Job_Costing_' + customer.replace(/ /g, '_') + '_' + date.replace(/\//g, '-') + '.pdf';
+          const file = new File([blob], filename, { type: 'application/pdf' });
+          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], title: 'Job Costing PDF' }).catch(err => console.log('Share failed', err));
+          } else {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+        }).catch(err => {
+          console.error('html2canvas error:', err);
+          document.body.removeChild(tempDiv);
+        });
+      }, 500);
     }
 
     function exportCSV() {
@@ -696,11 +800,27 @@
         rows.push([]);
         rows.push(['MATERIALS']);
         rows.push(['SKU', 'Qty', 'Unit', 'Item', 'Price (TTD)']);
-        job.addedItems.forEach(m => rows.push([m.SKU, m.Qty, m.Unit, m.Item, (m.Price !== null && m.Price !== undefined) ? (m.Price * m.Qty).toFixed(2) : 'N/A']));
+        let matTotal = 0, matHasNA = false;
+        job.addedItems.forEach(m => {
+          const itemPrice = (m.Price !== null && m.Price !== undefined) ? (m.Price * m.Qty).toFixed(2) : 'N/A';
+          rows.push([m.SKU, m.Qty, m.Unit, m.Item, itemPrice]);
+          if (itemPrice !== 'N/A') matTotal += parseFloat(itemPrice);
+          else matHasNA = true;
+        });
+        rows.push(['Subtotal', '', '', '', matTotal.toFixed(2) + (matHasNA ? ' + N/A' : '')]);
         rows.push([]);
         rows.push(['ITEMS NOT LISTED']);
         rows.push(['SKU', 'Qty', 'Unit', 'Item', 'Price (TTD)']);
-        job.tmpItems.forEach(m => rows.push([m.SKU, m.Qty, m.Unit, m.Item, 'N/A']));
+        let tmpTotal = 0, tmpHasNA = false;
+        job.tmpItems.forEach(m => {
+          const itemPrice = (m.Price !== null && m.Price !== undefined) ? (m.Price * m.Qty).toFixed(2) : 'N/A';
+          rows.push([m.SKU, m.Qty, m.Unit, m.Item, itemPrice]);
+          if (itemPrice !== 'N/A') tmpTotal += parseFloat(itemPrice);
+          else tmpHasNA = true;
+        });
+        if (job.tmpItems.length > 0) {
+          rows.push(['Subtotal', '', '', '', tmpTotal.toFixed(2) + (tmpHasNA ? ' + N/A' : '')]);
+        }
         rows.push([]);
       });
 
@@ -759,6 +879,7 @@
       jobs[currentJobIndex].tmpItems.push({ SKU: sku, Item: name, Unit: 'each', Qty: qty, Price: price });
       renderTmpList(currentJobIndex);
       closeAddModal();
+      recalcSummary();
     }
 
     function removeTmpItem(jobIndex, index) {
@@ -766,6 +887,7 @@
       if (!job) return;
       job.tmpItems.splice(index, 1);
       renderTmpList(jobIndex);
+      recalcSummary();
     }
 
     function updateTmpQty(jobIndex, index, value) {
@@ -773,6 +895,7 @@
       if (!job) return;
       job.tmpItems[index].Qty = parseFloat(value) || 0;
       renderTmpList(jobIndex);
+      recalcSummary();
     }
 
     function renderTmpList(jobIndex) {
@@ -810,10 +933,51 @@
         hideSuggestions();
     });
 
+    function recalcSummary() {
+      let subtotal = 0;
+      let hasNA = false;
+
+      // Calculate subtotal from all jobs
+      jobs.forEach(job => {
+        job.addedItems.forEach(item => {
+          if (item.Price !== null && item.Price !== undefined) {
+            subtotal += item.Qty * item.Price;
+          } else {
+            hasNA = true;
+          }
+        });
+        job.tmpItems.forEach(item => {
+          if (item.Price !== null && item.Price !== undefined) {
+            subtotal += item.Qty * item.Price;
+          } else {
+            hasNA = true;
+          }
+        });
+      });
+
+      // Get markup and vat percentages
+      const markupPct = parseFloat(document.getElementById('pct-markup').value) || 0;
+      const vatPct = parseFloat(document.getElementById('pct-vat').value) || 0;
+
+      // Calculate amounts
+      const markup = subtotal * (markupPct / 100);
+      const vat = (subtotal + markup) * (vatPct / 100);
+      const total = subtotal + markup + vat;
+
+      // Update display
+      const subDisplay = subtotal.toFixed(2) + (hasNA ? ' + N/A' : '');
+      document.getElementById('bar-sub').textContent = '$' + subtotal.toFixed(2) + (hasNA ? ' + N/A' : '');
+      document.getElementById('bar-markup').textContent = '$' + markup.toFixed(2);
+      document.getElementById('bar-vat').textContent = '$' + vat.toFixed(2);
+      document.getElementById('bar-total').textContent = '$' + total.toFixed(2) + (hasNA ? ' + N/A' : '');
+    }
+
     window.onload = () => {
       document.getElementById('date').value = new Date().toISOString().split('T')[0];
       loadMaterials();
+      recalcSummary();
     };
   </script>
 </body>
+
 </html>
