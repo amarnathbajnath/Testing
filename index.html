@@ -235,7 +235,7 @@
       </button>
       <button onclick="exportCSV()"
         class="btn btn-secondary w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
-        Share CSV ➜
+        Share CSV ➜]
       </button>
     </div>
 
@@ -623,172 +623,112 @@
     }
 
     function generatePDF() {
-      console.log('generatePDF called');
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       const customer = document.getElementById('customer').value || 'Customer';
-      const address = document.getElementById('address').value || '—';
+      const address = document.getElementById('address').value || '';
       const date = document.getElementById('date').value || new Date().toLocaleDateString();
       const notes = document.getElementById('notes').value || '';
-      const markupPct = parseFloat(document.getElementById('pct-markup').value) || 27.5;
-      const vatPct = parseFloat(document.getElementById('pct-vat').value) || 12.5;
 
-      const fmt = v => '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      doc.setFontSize(20); doc.text('Job Costing', 20, 20);
+      doc.setFontSize(12);
+      doc.text('Customer: ' + customer, 20, 35);
+      doc.text('Address: ' + address, 20, 42);
+      doc.text('Date: ' + date, 20, 49);
 
-      let allMatTotal = 0, allTmpTotal = 0, hasNA = false;
-      let tableRows = '';
-
+      let y = 56;
       for (let index = 0; index < jobs.length; index++) {
-        const job = jobs[index];
         const scopeText = document.getElementById('scope-' + index)?.value || '';
-
-        if (index > 0) tableRows += '<tr style="height:4px"><td colspan="6"></td></tr>';
-
         if (scopeText) {
-          tableRows += `<tr><td colspan="6" style="padding:8px;background:rgba(249,168,37,0.1);font-weight:600;font-size:0.85rem;border-top:1px solid rgba(249,168,37,0.3)"><b>Scope:</b> ${scopeText}</td></tr>`;
+          const sl = doc.splitTextToSize('Scope: ' + scopeText, 170);
+          doc.text(sl, 20, y);
+          y += sl.length * 7 + 4;
         }
 
-        // Materials section
-        if (job.addedItems.length > 0) {
-          tableRows += `<tr style="background:rgba(249,168,37,0.15);border-top:2px solid rgba(249,168,37,0.3)"><td colspan="6" style="padding:6px 8px;font-weight:700;font-size:0.9rem;color:#0d1b2a">Job ${index + 1} — MATERIALS</td></tr>`;
-          let secTotal = 0, secHasNA = false;
+        doc.setFontSize(12); doc.setFont(undefined, 'bold');
+        doc.text('Job ' + (index + 1) + ' Materials', 20, y); y += 8;
+        doc.setFontSize(9); doc.setFont(undefined, 'normal');
+        y = drawHeader(doc, y);
+
+        let matTotal = 0;
+        let matHasNA = false;
+        const job = jobs[index];
+        if (!job.addedItems.length) {
+          doc.text('No items added.', 20, y); y += 8;
+        } else {
           job.addedItems.forEach(item => {
-            const itemTotal = item.Qty * (item.Price || 0);
-            secTotal += itemTotal;
-            if (item.Price === null || item.Price === undefined) secHasNA = true;
-            tableRows += `<tr style="border-bottom:1px solid #f0f0f0">
-              <td style="padding:6px 8px;font-size:0.8rem;color:#999;font-family:monospace">${item.SKU}</td>
-              <td style="padding:6px 8px;text-align:center;font-size:0.85rem">${item.Qty}</td>
-              <td style="padding:6px 8px;text-align:center;font-size:0.85rem">${item.Unit}</td>
-              <td style="padding:6px 8px;font-size:0.85rem">${item.Item}</td>
-              <td style="padding:6px 8px;text-align:right;font-size:0.85rem">${item.Price !== null && item.Price !== undefined ? fmt(item.Price) : 'N/A'}</td>
-              <td style="padding:6px 8px;text-align:right;font-size:0.85rem;font-weight:600">${itemTotal > 0 ? fmt(itemTotal) : 'N/A'}</td>
-            </tr>`;
+            if (y > 272) { doc.addPage(); y = 20; y = drawHeader(doc, y); }
+            y = drawRow(doc, item, y);
+            if (item.Price !== null && item.Price !== undefined) matTotal += item.Price * item.Qty;
+            else matHasNA = true;
           });
-          tableRows += `<tr style="background:#fafafa;font-weight:600"><td colspan="4" style="padding:6px 8px;text-align:right">Materials Subtotal:</td><td colspan="2" style="padding:6px 8px;text-align:right">${fmt(secTotal)}${secHasNA ? ' + N/A' : ''}</td></tr>`;
-          allMatTotal += secTotal;
-          if (secHasNA) hasNA = true;
+          y += 3; doc.line(130, y, 190, y); y += 5;
+          doc.setFont(undefined, 'bold'); doc.setFontSize(9);
+          doc.text('Subtotal:', 130, y);
+          doc.text(matTotal.toFixed(2) + (matHasNA ? ' + N/A' : ''), 190, y, { align: 'right' });
+          doc.setFont(undefined, 'normal'); y += 8;
         }
 
-        // Items Not Listed section
-        if (job.tmpItems.length > 0) {
-          tableRows += `<tr style="background:rgba(21,101,192,0.15);border-top:2px solid rgba(21,101,192,0.3)"><td colspan="6" style="padding:6px 8px;font-weight:700;font-size:0.9rem;color:#0d1b2a">ITEMS NOT LISTED</td></tr>`;
-          let secTotal = 0, secHasNA = false;
+        if (job.tmpItems.length) {
+          y += 4;
+          if (y > 255) { doc.addPage(); y = 20; }
+          doc.setFontSize(12); doc.setFont(undefined, 'bold'); doc.text('Items Not Listed', 20, y); y += 8;
+          doc.setFontSize(9); doc.setFont(undefined, 'normal');
+          y = drawHeader(doc, y);
           job.tmpItems.forEach(item => {
-            const itemTotal = item.Qty * (item.Price || 0);
-            secTotal += itemTotal;
-            if (item.Price === null || item.Price === undefined) secHasNA = true;
-            tableRows += `<tr style="border-bottom:1px solid #f0f0f0">
-              <td style="padding:6px 8px;font-size:0.8rem;color:#999;font-family:monospace">${item.SKU}</td>
-              <td style="padding:6px 8px;text-align:center;font-size:0.85rem">${item.Qty}</td>
-              <td style="padding:6px 8px;text-align:center;font-size:0.85rem">${item.Unit}</td>
-              <td style="padding:6px 8px;font-size:0.85rem">${item.Item}</td>
-              <td style="padding:6px 8px;text-align:right;font-size:0.85rem">${item.Price !== null && item.Price !== undefined ? fmt(item.Price) : 'N/A'}</td>
-              <td style="padding:6px 8px;text-align:right;font-size:0.85rem;font-weight:600">${itemTotal > 0 ? fmt(itemTotal) : 'N/A'}</td>
-            </tr>`;
+            if (y > 272) { doc.addPage(); y = 20; y = drawHeader(doc, y); }
+            y = drawRow(doc, item, y);
           });
-          tableRows += `<tr style="background:#fafafa;font-weight:600"><td colspan="4" style="padding:6px 8px;text-align:right">Items Subtotal:</td><td colspan="2" style="padding:6px 8px;text-align:right">${fmt(secTotal)}${secHasNA ? ' + N/A' : ''}</td></tr>`;
-          allTmpTotal += secTotal;
-          if (secHasNA) hasNA = true;
+          y += 8;
+        }
+
+        if (index < jobs.length - 1) {
+          y += 8;
+          if (y > 255) { doc.addPage(); y = 20; }
         }
       }
 
-      const subtotal = allMatTotal + allTmpTotal;
-      const markup = subtotal * (markupPct / 100);
-      const vat = (subtotal + markup) * (vatPct / 100);
-      const total = subtotal + markup + vat;
+      if (notes) {
+        if (y > 255) { doc.addPage(); y = 20; }
+        doc.setFont(undefined, 'bold'); doc.text('Notes:', 20, y); doc.setFont(undefined, 'normal'); y += 7;
+        doc.text(doc.splitTextToSize(notes, 170), 20, y);
+      }
 
-      const printHTML = `
-        <div style="font-family:'Barlow',sans-serif;background:white;color:#111;padding:32px;max-width:900px;margin:0 auto">
-          <div style="text-align:center;margin-bottom:24px;border-bottom:2px solid #0d1b2a;padding-bottom:12px">
-            <h1 style="margin:0;font-size:1.8rem;color:#0d1b2a;font-family:'Barlow Condensed',sans-serif">⚡ JOB COSTING SUMMARY</h1>
-            <p style="margin:4px 0 0 0;color:#666;font-size:0.9rem">Risha Vishal Electrical &amp; Construction Co. Ltd.</p>
-          </div>
-          
-          <table style="width:100%;margin-bottom:16px;border-collapse:collapse;font-size:0.9rem">
-            <tr><td style="padding:4px"><b>Customer:</b> ${customer}</td><td style="padding:4px"><b>Date:</b> ${date}</td></tr>
-            <tr><td style="padding:4px"><b>Address:</b> ${address}</td><td style="padding:4px"></td></tr>
-          </table>
-          
-          <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:0.85rem">
-            <thead><tr style="background:#0d1b2a;color:white">
-              <th style="padding:8px;text-align:left;font-weight:700;border-right:1px solid #ddd;width:12%">SKU</th>
-              <th style="padding:8px;text-align:center;font-weight:700;border-right:1px solid #ddd;width:8%">Qty</th>
-              <th style="padding:8px;text-align:center;font-weight:700;border-right:1px solid #ddd;width:12%">Unit</th>
-              <th style="padding:8px;text-align:left;font-weight:700;border-right:1px solid #ddd;width:40%">Item</th>
-              <th style="padding:8px;text-align:right;font-weight:700;border-right:1px solid #ddd;width:14%">Unit Price</th>
-              <th style="padding:8px;text-align:right;font-weight:700;width:14%">Total</th>
-            </tr></thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-          
-          <table style="width:100%;max-width:400px;margin-left:auto;margin-right:0;border-collapse:collapse;font-size:0.9rem;border:1px solid #ddd">
-            <tr><td style="padding:8px 12px"><b>Subtotal:</b></td><td style="padding:8px 12px;text-align:right;font-weight:600;border-left:1px solid #ddd">${fmt(subtotal)}${hasNA ? ' + N/A' : ''}</td></tr>
-            <tr style="background:#f8f8f8"><td style="padding:8px 12px"><b>Markup (${markupPct}%):</b></td><td style="padding:8px 12px;text-align:right;border-left:1px solid #ddd">${fmt(markup)}</td></tr>
-            <tr><td style="padding:8px 12px"><b>VAT/Tax (${vatPct}%):</b></td><td style="padding:8px 12px;text-align:right;font-weight:600;border-left:1px solid #ddd">${fmt(vat)}</td></tr>
-            <tr style="background:#0d1b2a;color:#f9a825;font-weight:700;font-size:1rem"><td style="padding:10px 12px">TOTAL QUOTED:</td><td style="padding:10px 12px;text-align:right;border-left:1px solid #666">${fmt(total)}${hasNA ? ' + N/A' : ''}</td></tr>
-          </table>
-          ${notes ? `<div style="margin-top:24px;padding:12px;background:#f8f8f8;border-left:4px solid #f9a825;font-size:0.85rem"><b>Notes:</b><br/>${notes.replace(/\n/g, '<br/>')}</div>` : ''}
-          <p style="margin-top:24px;font-size:0.75rem;color:#999;text-align:center;border-top:1px solid #ddd;padding-top:12px">Generated on ${new Date().toLocaleDateString()} | Job Costing Dashboard</p>
-        </div>
-      `;
+      const blob = doc.output('blob');
+      const filename = 'Material_List_' + customer.replace(/ /g, '_') + '_' + date + '.pdf';
+      const file = new File([blob], filename, { type: 'application/pdf' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: 'Material List PDF' }).catch(err => console.log('Share failed', err));
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    }
 
-      // Create a temporary element to hold the HTML
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = printHTML;
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-10000px';
-      tempDiv.style.top = '0';
-      tempDiv.style.opacity = '1';
-      tempDiv.style.pointerEvents = 'none';
-      tempDiv.style.zIndex = '-9999';
-      tempDiv.style.width = '800px';
-      tempDiv.style.minHeight = '1000px'; // Ensure minimum height
-      document.body.appendChild(tempDiv);
+    function drawHeader(doc, yy) {
+      doc.setFontSize(9); doc.setFont(undefined, 'bold');
+      doc.text('SKU', 20, yy);
+      doc.text('Qty', 60, yy);
+      doc.text('Unit', 75, yy);
+      doc.text('Item', 95, yy);
+      doc.text('Price (TTD)', 190, yy, { align: 'right' });
+      doc.setFont(undefined, 'normal');
+      yy += 4; doc.line(20, yy, 190, yy); yy += 5;
+      return yy;
+    }
 
-      // Wait for rendering and use html2canvas with better options for large content
-      setTimeout(() => {
-        html2canvas(tempDiv, {
-          scale: 1.5, // Reduced scale for better performance
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: 'white',
-          letterRendering: true,
-          width: 800,
-          height: tempDiv.offsetHeight,
-          scrollX: 0,
-          scrollY: 0
-        }).then(canvas => {
-          console.log('Canvas created, size:', canvas.width, 'x', canvas.height);
-          document.body.removeChild(tempDiv);
-          const imgData = canvas.toDataURL('image/png');
-          const imgWidth = 190;
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-          console.log('Image size:', imgWidth, 'x', imgHeight);
-
-          // Add the full image - jsPDF will automatically create multiple pages if needed
-          doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-
-          const blob = doc.output('blob');
-          const filename = 'Job_Costing_' + customer.replace(/ /g, '_') + '_' + date.replace(/\//g, '-') + '.pdf';
-          console.log('PDF generated, size:', blob.size);
-          const file = new File([blob], filename, { type: 'application/pdf' });
-          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({ files: [file], title: 'Job Costing PDF' }).catch(err => console.log('Share failed', err));
-          } else {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-            URL.revokeObjectURL(url);
-          }
-        }).catch(err => {
-          console.error('html2canvas error:', err);
-          document.body.removeChild(tempDiv);
-        });
-      }, 1000); // Increased timeout for better rendering
+    function drawRow(doc, item, yy) {
+      doc.setFontSize(9);
+      doc.text(String(item.SKU), 20, yy);
+      doc.text(String(item.Qty), 60, yy);
+      doc.text(String(item.Unit), 75, yy);
+      doc.text(item.Item.substring(0, 42), 95, yy);
+      doc.text((item.Price !== null && item.Price !== undefined) ? (item.Price * item.Qty).toFixed(2) : 'N/A', 190, yy, { align: 'right' });
+      return yy + 7;
     }
 
     function exportCSV() {
