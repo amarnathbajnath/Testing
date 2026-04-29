@@ -235,7 +235,7 @@
       </button>
       <button onclick="exportCSV()"
         class="btn btn-secondary w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
-        Share CSV ➜]
+        Share CSV ➜
       </button>
     </div>
 
@@ -623,6 +623,7 @@
     }
 
     function generatePDF() {
+      console.log('generatePDF called');
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       const customer = document.getElementById('customer').value || 'Customer';
@@ -741,27 +742,37 @@
       tempDiv.style.opacity = '1';
       tempDiv.style.pointerEvents = 'none';
       tempDiv.style.zIndex = '-9999';
+      tempDiv.style.width = '800px';
+      tempDiv.style.minHeight = '1000px'; // Ensure minimum height
       document.body.appendChild(tempDiv);
 
-      // Wait for rendering and use html2canvas
+      // Wait for rendering and use html2canvas with better options for large content
       setTimeout(() => {
         html2canvas(tempDiv, {
-          scale: 2,
+          scale: 1.5, // Reduced scale for better performance
           useCORS: true,
           allowTaint: true,
           backgroundColor: 'white',
-          letterRendering: true
+          letterRendering: true,
+          width: 800,
+          height: tempDiv.offsetHeight,
+          scrollX: 0,
+          scrollY: 0
         }).then(canvas => {
+          console.log('Canvas created, size:', canvas.width, 'x', canvas.height);
           document.body.removeChild(tempDiv);
           const imgData = canvas.toDataURL('image/png');
           const imgWidth = 190;
           const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-          // Add image to PDF
+          console.log('Image size:', imgWidth, 'x', imgHeight);
+
+          // Add the full image - jsPDF will automatically create multiple pages if needed
           doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
 
           const blob = doc.output('blob');
           const filename = 'Job_Costing_' + customer.replace(/ /g, '_') + '_' + date.replace(/\//g, '-') + '.pdf';
+          console.log('PDF generated, size:', blob.size);
           const file = new File([blob], filename, { type: 'application/pdf' });
           if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
             navigator.share({ files: [file], title: 'Job Costing PDF' }).catch(err => console.log('Share failed', err));
@@ -777,7 +788,7 @@
           console.error('html2canvas error:', err);
           document.body.removeChild(tempDiv);
         });
-      }, 500);
+      }, 1000); // Increased timeout for better rendering
     }
 
     function exportCSV() {
