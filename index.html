@@ -1,934 +1,1118 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Job Costing Dashboard</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap"
-    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles copy.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap');
-
-    body {
-      font-family: 'Barlow', sans-serif;
-    }
-
-    #scope {
-      min-height: 7.5rem;
-      resize: vertical;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
+<body>
+<div class="app-container">
 
-<body class="min-h-screen pb-12 app-shell">
-  <div class="max-w-6xl mx-auto p-4 app-container">
-    <div class="flex justify-between items-center mb-8 page-header">
-      <div>
-        <h1 class="text-3xl font-semibold title-white">⚡Job Costing Dashboard⚡</h1>
-        <p class="subtitle">Risha Vishal Electrical &amp; Construction Co. Ltd.</p>
-      </div>
-      <div class="text-right flex flex-col items-end gap-2">
-        <p id="status" class="text-sm text-emerald-600 font-medium">⏳ Loading materials...</p>
-        <button onclick="loadMaterials()" class="btn-outline text-xs px-3 py-1.5">↻ Refresh</button>
-      </div>
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <h1 style="font-size:1.75rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;">⚡ Job Costing Dashboard</h1>
+      <p class="subtitle">Risha Vishal Electrical &amp; Construction Co. Ltd.</p>
     </div>
-
-    <!-- Job Details -->
-    <div class="section-header rounded-3xl shadow p-4 mb-8 grid grid-cols-1 md:grid-cols-3 gap-6 panel">
-      <div>
-        <label class="field-label">CUSTOMER NAME</label>
-        <input id="customer" type="text" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
-          placeholder="John Smith">
-      </div>
-      <div>
-        <label class="field-label">ADDRESS</label>
-        <input id="address" type="text" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
-          placeholder="123 Main Road, Chaguanas">
-      </div>
-      <div>
-        <label class="field-label">DATE</label>
-        <input id="date" type="date" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input">
-      </div>
+    <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
+      <p id="status" style="color:#94a3b8;">⏳ Loading materials...</p>
+      <button onclick="loadMaterials()" class="btn-outline" style="font-size:0.75rem;padding:0.35rem 0.85rem;">↻ Refresh</button>
     </div>
-
-    <div id="jobSections">
-      <div class="job-section" data-job-index="0">
-        <!-- Scope (standalone, 5-line expandable) -->
-        <div class="section-header rounded-3xl shadow p-4 mb-8 panel">
-          <div class="flex justify-between items-center mb-2">
-            <label class="block text-xl font-bold title-white">SCOPE</label>
-            <button onclick="removeSection(0)" class="text-red-500 hover:text-red-700 font-medium text-sm"
-              title="Remove Section">✕</button>
-          </div>
-          <textarea id="scope-0" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
-            placeholder="Describe the scope of this job..."></textarea>
-        </div>
-
-        <!-- MATERIAL LIST -->
-        <div class="rounded-3xl shadow mb-8 table-panel">
-          <div class="px-4 pt-4 pb-0">
-            <h2 class="font-semibold text-xl mb-3 title-white">MATERIAL LIST</h2>
-            <!-- Search row + dropdown — all in one relative container so dropdown isn't clipped -->
-            <div class="relative pb-4 border-b">
-              <input id="searchOther-0" type="text" placeholder="Search by item name or SKU..."
-                class="w-full rounded-2xl px-5 py-3 focus:outline-none field-input" oninput="filterOther(0)"
-                onkeydown="handleSearchKey(event, 0)" autocomplete="off">
-              <ul id="suggestionList-0" class="suggestion-list hidden" style="top:100%;"></ul>
-            </div>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="table-header">
-                <tr>
-                  <th class="text-left p-4 font-medium w-28">SKU</th>
-                  <th class="text-center p-4 font-medium w-28">QTY</th>
-                  <th class="text-left p-4 font-medium w-24">UNIT</th>
-                  <th class="text-left p-4 font-medium">ITEM</th>
-                  <th class="text-center p-4 font-medium w-28">PRICE</th>
-                  <th class="text-center p-4 font-medium w-20">REMOVE</th>
-                </tr>
-              </thead>
-              <tbody id="materialListBody-0">
-                <tr>
-                  <td colspan="6" class="p-8 text-center text-gray-400 italic">No items added yet. Search and add
-                    materials above.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- ITEMS NOT LISTED -->
-        <div class="section-header rounded-3xl shadow mb-8 panel">
-          <div class="px-4 py-4 border-b flex items-center justify-between">
-            <h2 class="font-semibold text-xl title-white">ITEMS NOT LISTED</h2>
-            <button onclick="openAddModal(0)" class="btn-primary px-6 py-2.5">
-              + Add New Item
-            </button>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="table-header">
-                <tr>
-                  <th class="text-left p-4 font-medium w-28">SKU</th>
-                  <th class="text-center p-4 font-medium w-28">QTY</th>
-                  <th class="text-left p-4 font-medium w-24">UNIT</th>
-                  <th class="text-left p-4 font-medium">ITEM</th>
-                  <th class="text-center p-4 font-medium w-28">PRICE</th>
-                  <th class="text-center p-4 font-medium w-20">REMOVE</th>
-                </tr>
-              </thead>
-              <tbody id="tmpListBody-0" class="divide-y">
-                <tr>
-                  <td colspan="6" class="p-8 text-center text-gray-400 italic">No unlisted items added yet. Click "Add
-                    New Item" to add one.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="addNewSectionContainer" class="mb-8">
-      <button id="addNewSectionBtn" onclick="addNewSection()"
-        class="btn-primary w-full max-w-xs mx-auto block text-center px-6 py-2.5">
-        + Add New Section
-      </button>
-    </div>
-
-    <!-- Add New Item Modal -->
-    <div id="addModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
-      <div class="absolute inset-0 bg-black bg-opacity-10" onclick="closeAddModal()"></div>
-      <div class="modal-card mx-4">
-        <h3 class="modal-title">ADD UNLISTED ITEM</h3>
-        <div class="space-y-4">
-          <div>
-            <label class="modal-label">ITEM NAME <span class="text-accent">*</span></label>
-            <input id="modalItemName" type="text" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
-              placeholder="e.g. Custom conduit fitting" onkeydown="if(event.key==='Enter') confirmAddModal()">
-          </div>
-          <div>
-            <label class="modal-label">QUANTITY</label>
-            <input id="modalQty" type="number" min="0" step="any"
-              class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
-              onkeydown="if(event.key==='Enter') confirmAddModal()">
-          </div>
-          <div>
-            <label class="modal-label">UNIT PRICE</label>
-            <input id="modalUnitPrice" type="number" value="0.00" min="0" step="0.01"
-              class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
-              onkeydown="if(event.key==='Enter') confirmAddModal()">
-          </div>
-          <div class="flex gap-4">
-            <div class="flex-1">
-              <label class="modal-label">SKU (auto)</label>
-              <div id="modalSkuPreview" class="modal-badge rounded-xl px-4 py-3 text-sm font-mono">TMP-001</div>
-            </div>
-            <div class="flex-1">
-              <label class="modal-label">UNIT (auto)</label>
-              <div class="modal-badge rounded-xl px-4 py-3 text-sm">each</div>
-            </div>
-          </div>
-        </div>
-        <div class="flex gap-3 mt-8 modal-actions">
-          <button onclick="closeAddModal()" class="btn-outline flex-1 py-3">
-            Cancel
-          </button>
-          <button onclick="confirmAddModal()" class="btn-primary flex-1 py-3">
-            Add Item
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Qty Modal (search selection) -->
-    <div id="qtyModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
-      <div class="absolute inset-0 bg-black bg-opacity-10" onclick="closeQtyModal()"></div>
-      <div class="modal-card mx-4">
-        <h3 class="modal-title" id="qtyModalTitle">ADD ITEM</h3>
-        <p id="qtyModalSku" class="text-xs font-mono modal-meta"></p>
-        <div class="space-y-4">
-          <div>
-            <label class="modal-label">QUANTITY</label>
-            <input id="qtyModalQty" type="number" value="1" min="0" step="any"
-              class="w-full rounded-xl px-4 py-3 focus:outline-none field-input"
-              onkeydown="if(event.key==='Enter') confirmQtyModal()">
-          </div>
-          <div class="flex gap-4">
-            <div class="flex-1">
-              <label class="modal-label">UNIT</label>
-              <div id="qtyModalUnit" class="modal-badge rounded-xl px-4 py-3 text-sm"></div>
-            </div>
-          </div>
-        </div>
-        <div class="flex gap-3 mt-8 modal-actions">
-          <button onclick="closeQtyModal()" class="btn-outline flex-1 py-3">
-            Cancel
-          </button>
-          <button onclick="confirmQtyModal()" class="btn-primary flex-1 py-3">
-            Add to List
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Notes -->
-    <div class="section-header rounded-3xl shadow p-4 mb-8 panel">
-      <h2 class="font-semibold text-xl mb-3 title-white">NOTES</h2>
-      <textarea id="notes" rows="5" class="w-full rounded-2xl px-5 py-4 focus:outline-none field-input"
-        placeholder="Additional notes for this job..."></textarea>
-    </div>
-
-    <!-- SUMMARY BAR -->
-    <div class="summary-bar rounded-3xl shadow p-4 mb-8">
-      <button onclick="generatePDF()"
-        class="btn btn-primary w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
-        Share PDF 📤
-      </button>
-      <button onclick="exportCSV()"
-        class="btn btn-secondary w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
-        Share CSV ➜]
-      </button>
-    </div>
-
-    <!-- Action Buttons -->
-    <!--<div class="rounded-3xl p-8 panel action-panel">
-      <button onclick="generatePDF()"
-              class="btn btn-primary w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
-        Share PDF 📤
-      </button>
-      <button onclick="exportCSV()"
-              class="btn btn-secondary w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-3 text-xl">
-        Share CSV ➜]
-      </button>
-    </div>-->
-
-    <!-- SUMMARY BAR -->
-    <div class="summary-bar-2 rounded-3xl shadow p-6 mb-8">
-      <div class="sum-item">
-        <div class="sum-label">Subtotal</div>
-        <div class="sum-value" id="bar-sub">$0.00</div>
-      </div>
-      <div class="sum-divider"></div>
-      <div class="sum-pct">
-        <div class="pct-row"><label>Markup %</label><input type="number" id="pct-markup" value="27.5" min="0" max="100"
-            oninput="recalcSummary()" />%</div>
-        <div class="pct-row"><label>VAT %</label><input type="number" id="pct-vat" value="12.5" min="0" max="100"
-            oninput="recalcSummary()" />%</div>
-      </div>
-      <div class="sum-divider"></div>
-      <div class="sum-item">
-        <div class="sum-label">Markup</div>
-        <div class="sum-value" id="bar-markup">$0.00</div>
-      </div>
-      <div class="sum-item">
-        <div class="sum-label">VAT</div>
-        <div class="sum-value" id="bar-vat">$0.00</div>
-      </div>
-      <div class="sum-divider"></div>
-      <div class="sum-item">
-        <div class="sum-label">Total Quoted</div>
-        <div class="sum-value total" id="bar-total">$0.00</div>
-      </div>
-    </div>
-
-
   </div>
 
-  <!-- </div> -->
+  <!-- JOB DETAILS -->
+  <div class="panel" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.25rem;">
+    <div>
+      <label class="field-label">Customer Name</label>
+      <input id="customer" type="text" class="field-input" placeholder="John Smith">
+    </div>
+    <div>
+      <label class="field-label">Address</label>
+      <input id="address" type="text" class="field-input" placeholder="123 Main Road, Chaguanas">
+    </div>
+    <div>
+      <label class="field-label">Date</label>
+      <input id="date" type="date" class="field-input">
+    </div>
+    <div>
+      <label class="field-label">Quote No.</label>
+      <input id="quoteNo" type="text" class="field-input" placeholder="e.g. Q-2026-001">
+    </div>
+  </div>
 
-  <script>
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQF-dVNCimVYFht-LgwEeKT4rEtW-IDphibc5oSV60YBjLxGn4KGT45nU2U58EfBCYbF0UdDxdoe88r/pub?gid=0&single=true&output=csv";
+  <!-- JOB SECTIONS -->
+  <div id="jobSections"></div>
 
-    let allMaterials = [];
-    let jobs = [{ addedItems: [], tmpItems: [] }];
-    let currentSuggestions = [];
-    let selectedSuggestionIndex = -1;
-    let currentJobIndex = 0;
-    let pendingItem = null;
+  <!-- ADD SECTION BUTTON -->
+  <div style="margin-bottom:2rem;text-align:center;">
+    <button onclick="addNewSection()" class="btn-primary" style="padding:0.65rem 2rem;">+ Add New Section</button>
+  </div>
 
-    async function loadMaterials() {
-      const status = document.getElementById('status');
-      status.textContent = '⏳ Loading materials...';
-      try {
-        const res = await fetch(CSV_URL + '&t=' + Date.now());
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const text = await res.text();
-        const parsed = parseCSV(text);
-        if (!parsed.length) throw new Error('Sheet appears empty');
-        allMaterials = parsed;
-        status.textContent = '✅ ' + allMaterials.length + ' items loaded';
-      } catch (err) {
-        status.innerHTML = '❌ Load failed — <span style="color:#6b7280;font-size:0.75rem">' + err.message + '</span>';
-      }
-    }
+  <!-- NOTES -->
+  <div class="panel">
+    <h2 class="title-white" style="font-size:1rem;margin-bottom:0.75rem;">NOTES</h2>
+    <textarea id="notes" rows="4" class="field-input scope-textarea" placeholder="Additional notes for this job..."></textarea>
+  </div>
 
-    function parseCSV(csv) {
-      const lines = csv.trim().split('\n');
-      return lines.slice(1).map(line => {
-        const values = [];
-        let current = '', inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-          const ch = line[i];
-          if (ch === '"') {
-            if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
-            else { inQuotes = !inQuotes; }
-          } else if (ch === ',' && !inQuotes) {
-            values.push(current.trim()); current = '';
-          } else { current += ch; }
-        }
-        values.push(current.trim());
-        const rawPrice = values[3] ? values[3].trim().replace(/[$,TTD ]/g, '') : '';
-        const price = rawPrice !== '' && !isNaN(parseFloat(rawPrice)) ? parseFloat(rawPrice) : null;
-        return { SKU: values[0] || '', Item: values[1] || '', Unit: values[2] || '', Price: price };
-      }).filter(m => m.Item);
-    }
+  <!-- EXPORT BUTTONS -->
+  <div class="summary-bar">
+    <button onclick="generatePDF()" class="btn-primary" style="flex:1;padding:0.85rem;font-size:1rem;">Share PDF 📤</button>
+    <button onclick="exportCSV()" class="btn-secondary" style="flex:1;padding:0.85rem;font-size:1rem;">Share CSV 📊</button>
+  </div>
 
-    function createJobSection(jobIndex) {
-      return `
-      <div class="job-section" data-job-index="${jobIndex}">
-        <div class="rounded-2xl shadow p-6 mb-8 panel">
-          <div class="flex justify-between items-center mb-2">
-            <label class="block text-xl font-bold title-white">Scope</label>
-            <button onclick="removeSection(${jobIndex})" class="text-red-500 hover:text-red-700 font-medium text-sm" title="Remove Section">✕</button>
-          </div>
-          <textarea id="scope-${jobIndex}" class="w-full rounded-xl px-4 py-3 focus:outline-none field-input" placeholder="Describe the scope of this job..."></textarea>
+  <!-- SUMMARY BAR -->
+  <div class="summary-bar-2">
+    <div class="sum-item">
+      <div class="sum-label">Subtotal</div>
+      <div class="sum-value" id="bar-sub">$0.00</div>
+    </div>
+    <div class="sum-divider"></div>
+    <div class="sum-pct">
+      <div class="pct-row">
+        <label>Markup %</label>
+        <input type="number" id="pct-markup" value="27.5" min="0" max="999" step="0.1" oninput="validatePct(this); recalcSummary()">%
+      </div>
+      <div class="pct-row">
+        <label>VAT %</label>
+        <input type="number" id="pct-vat" value="12.5" min="0" max="100" step="0.1" oninput="validatePct(this); recalcSummary()">%
+      </div>
+    </div>
+    <div class="sum-divider"></div>
+    <div class="sum-item">
+      <div class="sum-label">Markup</div>
+      <div class="sum-value" id="bar-markup">$0.00</div>
+    </div>
+    <div class="sum-item">
+      <div class="sum-label">VAT (on cost+markup)</div>
+      <div class="sum-value" id="bar-vat">$0.00</div>
+    </div>
+    <div class="sum-divider"></div>
+    <div class="sum-item">
+      <div class="sum-label">Total Quoted</div>
+      <div class="sum-value total" id="bar-total">$0.00</div>
+    </div>
+  </div>
+
+</div><!-- end app-container -->
+
+<!-- ADD ITEM MODAL -->
+<div id="addModal" class="modal-overlay hidden" onclick="handleModalOverlayClick(event, 'addModal')">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <h3 class="modal-title">Add Unlisted Item</h3>
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div>
+        <label class="modal-label">Item Name <span style="color:#f87171">*</span></label>
+        <input id="modalItemName" type="text" class="field-input" placeholder="e.g. Custom conduit fitting" onkeydown="if(event.key==='Enter') confirmAddModal()">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div>
+          <label class="modal-label">Quantity</label>
+          <input id="modalQty" type="number" min="0" step="any" class="field-input" onkeydown="if(event.key==='Enter') confirmAddModal()">
         </div>
-
-        <div class="rounded-3xl shadow mb-10 table-panel">
-          <div class="px-6 pt-4 pb-0">
-            <h2 class="font-semibold text-xl mb-3 title-white">Material List</h2>
-            <div class="relative pb-4 border-b">
-              <input id="searchOther-${jobIndex}" type="text" placeholder="Search by item name or SKU..."
-                     class="w-full rounded-2xl px-5 py-3 focus:outline-none field-input"
-                     oninput="filterOther(${jobIndex})" onkeydown="handleSearchKey(event, ${jobIndex})" autocomplete="off">
-              <ul id="suggestionList-${jobIndex}"
-                  class="suggestion-list hidden"
-                  style="top:100%;"></ul>
-            </div>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="table-header">
-                <tr>
-                  <th class="text-left font-medium w-28">SKU</th>
-                  <th class="text-center font-medium w-28">QTY</th>
-                  <th class="text-left font-medium w-24">UNIT</th>
-                  <th class="text-left font-medium">ITEM</th>
-                  <th class="text-center font-medium w-28">PRICE</th>
-                  <th class="text-center font-medium w-20">REMOVE</th>
-                </tr>
-              </thead>
-              <tbody id="materialListBody-${jobIndex}">
-                <tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No items added yet. Search and add materials above.</td></tr>
-              </tbody>
-            </table>
-          </div>
+        <div>
+          <label class="modal-label">Unit Price (TTD)</label>
+          <input id="modalUnitPrice" type="number" value="0.00" min="0" step="0.01" class="field-input" onkeydown="if(event.key==='Enter') confirmAddModal()">
         </div>
-
-        <div class="rounded-3xl shadow mb-10 table-panel">
-          <div class="px-6 py-4 border-b flex items-center justify-between">
-            <h2 class="font-semibold text-xl title-white">Items Not Listed</h2>
-            <button onclick="openAddModal(${jobIndex})" class="btn-primary px-6 py-2.5">
-              + Add New Item
-            </button>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="table-header">
-                <tr>
-                  <th class="text-left font-medium w-28">SKU</th>
-                  <th class="text-center font-medium w-28">QTY</th>
-                  <th class="text-left font-medium w-24">UNIT</th>
-                  <th class="text-left font-medium">ITEM</th>
-                  <th class="text-center font-medium w-28">PRICE</th>
-                  <th class="text-center font-medium w-20">REMOVE</th>
-                </tr>
-              </thead>
-              <tbody id="tmpListBody-${jobIndex}">
-                <tr><td colspan="5" class="p-8 text-center text-gray-400 italic">No unlisted items added yet. Click "Add New Item" to add one.</td></tr>
-              </tbody>
-            </table>
-          </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div>
+          <label class="modal-label">SKU (auto)</label>
+          <div id="modalSkuPreview" class="modal-badge" style="font-family:monospace;">TMP-001</div>
         </div>
-      </div>`;
+        <div>
+          <label class="modal-label">Unit (auto)</label>
+          <div class="modal-badge">each</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;margin-top:1.5rem;">
+      <button onclick="closeAddModal()" class="btn-outline" style="flex:1;padding:0.75rem;">Cancel</button>
+      <button onclick="confirmAddModal()" class="btn-primary" style="flex:1;padding:0.75rem;">Add Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- QTY MODAL -->
+<div id="qtyModal" class="modal-overlay hidden" onclick="handleModalOverlayClick(event, 'qtyModal')">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <h3 class="modal-title" id="qtyModalTitle">Add Item</h3>
+    <p id="qtyModalSku" class="modal-meta"></p>
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div>
+        <label class="modal-label">Quantity</label>
+        <input id="qtyModalQty" type="number" value="1" min="0" step="any" class="field-input" onkeydown="if(event.key==='Enter') confirmQtyModal()">
+      </div>
+      <div>
+        <label class="modal-label">Unit</label>
+        <div id="qtyModalUnit" class="modal-badge"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;margin-top:1.5rem;">
+      <button onclick="closeQtyModal()" class="btn-outline" style="flex:1;padding:0.75rem;">Cancel</button>
+      <button onclick="confirmQtyModal()" class="btn-primary" style="flex:1;padding:0.75rem;">Add to List</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  CONFIG
+// ─────────────────────────────────────────────
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQF-dVNCimVYFht-LgwEeKT4rEtW-IDphibc5oSV60YBjLxGn4KGT45nU2U58EfBCYbF0UdDxdoe88r/pub?gid=0&single=true&output=csv";
+const COMPANY = "Risha Vishal Electrical & Construction Co. Ltd.";
+
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+let allMaterials = [];
+let jobs = [];           // [{ scope, addedItems, tmpItems }]
+let currentSuggestions = [];
+let selectedSuggestionIndex = -1;
+let currentJobIndex = 0;
+let pendingItem = null;
+// TMP SKU counter — never resets, so no collisions even after removals
+let tmpSkuCounter = 0;
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+window.onload = () => {
+  document.getElementById('date').value = new Date().toISOString().split('T')[0];
+  addNewSection();   // always start with one section
+  loadMaterials();
+  recalcSummary();
+};
+
+// ─────────────────────────────────────────────
+//  MATERIALS LOAD
+// ─────────────────────────────────────────────
+async function loadMaterials() {
+  const status = document.getElementById('status');
+  status.textContent = '⏳ Loading materials...';
+  try {
+    const res = await fetch(CSV_URL + '&t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const parsed = parseCSV(text);
+    if (!parsed.length) throw new Error('Sheet appears empty');
+    allMaterials = parsed;
+    status.textContent = '✅ ' + allMaterials.length + ' items loaded';
+  } catch (err) {
+    status.innerHTML = '❌ Load failed — <span style="color:#6b7280;font-size:0.75rem">' + err.message + '</span>';
+  }
+}
+
+function parseCSV(csv) {
+  const lines = csv.trim().split('\n');
+  return lines.slice(1).map(line => {
+    const values = [];
+    let current = '', inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if (ch === ',' && !inQuotes) {
+        values.push(current.trim()); current = '';
+      } else { current += ch; }
     }
+    values.push(current.trim());
+    const rawPrice = values[3] ? values[3].trim().replace(/[$,TTD ]/g, '') : '';
+    const price = rawPrice !== '' && !isNaN(parseFloat(rawPrice)) ? parseFloat(rawPrice) : null;
+    return { SKU: values[0] || '', Item: values[1] || '', Unit: values[2] || '', Price: price };
+  }).filter(m => m.Item);
+}
 
-    function addNewSection() {
-      const nextIndex = jobs.length;
-      jobs.push({ addedItems: [], tmpItems: [] });
-      const container = document.getElementById('jobSections');
-      const temp = document.createElement('div');
-      temp.innerHTML = createJobSection(nextIndex);
-      const section = temp.firstElementChild;
-      if (section) container.appendChild(section);
-      currentJobIndex = nextIndex;
-      setTimeout(() => {
-        const input = document.getElementById('searchOther-' + nextIndex);
-        if (input) input.focus();
-      }, 50);
-    }
+// ─────────────────────────────────────────────
+//  SECTION MANAGEMENT
+// ─────────────────────────────────────────────
+function addNewSection() {
+  const idx = jobs.length;
+  jobs.push({ scope: '', addedItems: [], tmpItems: [] });
+  const container = document.getElementById('jobSections');
+  const el = document.createElement('div');
+  el.id = 'job-section-' + idx;
+  el.className = 'job-section';
+  el.dataset.jobIndex = idx;
+  el.innerHTML = buildSectionHTML(idx);
+  container.appendChild(el);
+  setTimeout(() => {
+    const inp = document.getElementById('searchOther-' + idx);
+    if (inp) inp.focus();
+  }, 50);
+}
 
-    function removeSection(jobIndex) {
-      if (jobs.length <= 1) return; // Prevent removing the last section
-      jobs.splice(jobIndex, 1);
-      reRenderAllSections();
-      currentJobIndex = Math.min(currentJobIndex, jobs.length - 1);
-    }
+function buildSectionHTML(idx) {
+  const label = jobs.length > 1 ? `<span class="section-chip">Section ${idx + 1}</span>` : '';
+  return `
+    <!-- SCOPE -->
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
+        <div>
+          ${label}
+          <label class="title-white" style="display:block;font-size:1rem;">SCOPE</label>
+        </div>
+        ${jobs.length > 1 ? `<button onclick="removeSection(${idx})" class="btn-outline" style="color:#f87171;border-color:#f87171;padding:0.3rem 0.75rem;font-size:0.75rem;" title="Remove Section">✕ Remove</button>` : ''}
+      </div>
+      <textarea id="scope-${idx}" class="field-input scope-textarea" placeholder="Describe the scope of this job..." oninput="jobs[${idx}].scope=this.value">${jobs[idx].scope}</textarea>
+    </div>
 
-    function reRenderAllSections() {
-      const container = document.getElementById('jobSections');
-      container.innerHTML = '';
-      jobs.forEach((job, i) => {
-        const temp = document.createElement('div');
-        temp.innerHTML = createJobSection(i);
-        const section = temp.firstElementChild;
-        if (section) container.appendChild(section);
-        renderMaterialList(i);
-        renderTmpList(i);
-      });
-    }
+    <!-- MATERIAL LIST -->
+    <div class="table-panel">
+      <div style="padding:1.25rem 1.25rem 0;">
+        <h2 class="title-white" style="font-size:1rem;margin-bottom:0.75rem;">MATERIAL LIST</h2>
+        <div style="position:relative;padding-bottom:1rem;border-bottom:1px solid #2d3148;">
+          <input id="searchOther-${idx}" type="text" placeholder="Search by item name or SKU..."
+            class="field-input"
+            oninput="filterOther(${idx})"
+            onkeydown="handleSearchKey(event, ${idx})"
+            autocomplete="off">
+          <ul id="suggestionList-${idx}" class="suggestion-list hidden"></ul>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead class="table-header">
+            <tr>
+              <th style="text-align:left;width:7rem;">SKU</th>
+              <th style="text-align:center;width:6rem;">QTY</th>
+              <th style="text-align:left;width:5rem;">UNIT</th>
+              <th style="text-align:left;">ITEM</th>
+              <th style="text-align:right;width:6rem;">UNIT $</th>
+              <th style="text-align:right;width:7rem;">TOTAL</th>
+              <th style="text-align:center;width:4rem;">✕</th>
+            </tr>
+          </thead>
+          <tbody id="materialListBody-${idx}">
+            <tr><td colspan="7" style="padding:2rem;text-align:center;color:#475569;font-style:italic;">No items added yet. Search and add materials above.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-    function filterOther(jobIndex) {
-      currentJobIndex = jobIndex;
-      const searchInput = document.getElementById('searchOther-' + jobIndex);
-      const list = document.getElementById('suggestionList-' + jobIndex);
-      selectedSuggestionIndex = -1;
-      if (!searchInput || !list) { hideSuggestions(); return; }
+    <!-- ITEMS NOT LISTED -->
+    <div class="table-panel">
+      <div style="padding:1rem 1.25rem;border-bottom:1px solid #2d3148;display:flex;align-items:center;justify-content:space-between;">
+        <h2 class="title-white" style="font-size:1rem;">ITEMS NOT LISTED</h2>
+        <button onclick="openAddModal(${idx})" class="btn-primary" style="padding:0.5rem 1rem;">+ Add Item</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead class="table-header">
+            <tr>
+              <th style="text-align:left;width:7rem;">SKU</th>
+              <th style="text-align:center;width:6rem;">QTY</th>
+              <th style="text-align:left;width:5rem;">UNIT</th>
+              <th style="text-align:left;">ITEM</th>
+              <th style="text-align:right;width:6rem;">UNIT $</th>
+              <th style="text-align:right;width:7rem;">TOTAL</th>
+              <th style="text-align:center;width:4rem;">✕</th>
+            </tr>
+          </thead>
+          <tbody id="tmpListBody-${idx}">
+            <tr><td colspan="7" style="padding:2rem;text-align:center;color:#475569;font-style:italic;">No unlisted items added yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
 
-      const term = searchInput.value.toLowerCase().trim();
-      if (!term) { hideSuggestions(); return; }
+function removeSection(jobIndex) {
+  if (jobs.length <= 1) return;
+  // Save scope values before re-render
+  saveAllScopes();
+  jobs.splice(jobIndex, 1);
+  reRenderAllSections();
+  currentJobIndex = Math.min(currentJobIndex, jobs.length - 1);
+}
 
-      currentSuggestions = allMaterials
-        .filter(m => m.Item.toLowerCase().includes(term) || m.SKU.toLowerCase().includes(term))
-        .slice(0, 15);
+function saveAllScopes() {
+  jobs.forEach((job, i) => {
+    const el = document.getElementById('scope-' + i);
+    if (el) job.scope = el.value;
+  });
+}
 
-      if (!currentSuggestions.length) { hideSuggestions(); return; }
+function reRenderAllSections() {
+  saveAllScopes();
+  const container = document.getElementById('jobSections');
+  container.innerHTML = '';
+  jobs.forEach((_, i) => {
+    const el = document.createElement('div');
+    el.id = 'job-section-' + i;
+    el.className = 'job-section';
+    el.dataset.jobIndex = i;
+    el.innerHTML = buildSectionHTML(i);
+    container.appendChild(el);
+    renderMaterialList(i);
+    renderTmpList(i);
+  });
+}
 
-      list.innerHTML = currentSuggestions.map((m, i) =>
-        '<li id="sug-' + jobIndex + '-' + i + '" class="px-5 py-3 cursor-pointer flex items-center gap-3 text-sm border-b border-gray-50 last:border-0 hover:bg-blue-50" onmousedown="event.preventDefault()" onclick="selectSuggestion(' + i + ', ' + jobIndex + ')">' +
-        '<span style="font-family:monospace;font-size:0.68rem;color:#bbb;width:5.5rem;flex-shrink:0">' + m.SKU + '</span>' +
-        '<span style="flex:1;font-weight:500;color:#111827">' + m.Item + '</span>' +
-        '<span style="font-size:0.72rem;color:#9ca3af;flex-shrink:0;margin-left:8px">' + m.Unit + '</span>' +
-        '</li>'
-      ).join('');
-      list.classList.remove('hidden');
-    }
+// ─────────────────────────────────────────────
+//  SEARCH / SUGGESTIONS
+// ─────────────────────────────────────────────
+function filterOther(jobIndex) {
+  currentJobIndex = jobIndex;
+  const searchInput = document.getElementById('searchOther-' + jobIndex);
+  const list = document.getElementById('suggestionList-' + jobIndex);
+  selectedSuggestionIndex = -1;
+  if (!searchInput || !list) { hideSuggestions(); return; }
+  const term = searchInput.value.toLowerCase().trim();
+  if (!term) { hideSuggestions(); return; }
+  currentSuggestions = allMaterials
+    .filter(m => m.Item.toLowerCase().includes(term) || m.SKU.toLowerCase().includes(term))
+    .slice(0, 15);
+  if (!currentSuggestions.length) { hideSuggestions(); return; }
+  list.innerHTML = currentSuggestions.map((m, i) =>
+    `<li id="sug-${jobIndex}-${i}" onmousedown="event.preventDefault()" onclick="selectSuggestion(${i}, ${jobIndex})">
+      <span style="font-family:monospace;font-size:0.65rem;color:#475569;width:5rem;flex-shrink:0;">${m.SKU}</span>
+      <span style="flex:1;font-weight:500;color:#e2e8f0;">${m.Item}</span>
+      <span style="font-size:0.7rem;color:#64748b;flex-shrink:0;">${m.Unit}</span>
+    </li>`
+  ).join('');
+  list.classList.remove('hidden');
+}
 
-    function hideSuggestions() {
-      document.querySelectorAll('[id^="suggestionList-"]').forEach(el => el.classList.add('hidden'));
-      currentSuggestions = [];
-      selectedSuggestionIndex = -1;
-    }
+function hideSuggestions() {
+  document.querySelectorAll('[id^="suggestionList-"]').forEach(el => el.classList.add('hidden'));
+  currentSuggestions = [];
+  selectedSuggestionIndex = -1;
+}
 
-    function highlightSuggestion() {
-      const list = document.getElementById('suggestionList-' + currentJobIndex);
-      if (!list) return;
-      Array.from(list.querySelectorAll('li')).forEach((li, i) => {
-        li.style.background = i === selectedSuggestionIndex ? '#EFF6FF' : '';
-      });
-      const active = document.getElementById('sug-' + currentJobIndex + '-' + selectedSuggestionIndex);
-      if (active) active.scrollIntoView({ block: 'nearest' });
-    }
+function highlightSuggestion() {
+  const list = document.getElementById('suggestionList-' + currentJobIndex);
+  if (!list) return;
+  Array.from(list.querySelectorAll('li')).forEach((li, i) => {
+    li.classList.toggle('active', i === selectedSuggestionIndex);
+  });
+  const active = document.getElementById('sug-' + currentJobIndex + '-' + selectedSuggestionIndex);
+  if (active) active.scrollIntoView({ block: 'nearest' });
+}
 
-    function handleSearchKey(e, jobIndex) {
-      currentJobIndex = jobIndex;
-      const list = document.getElementById('suggestionList-' + jobIndex);
-      const open = list && !list.classList.contains('hidden');
-      const count = currentSuggestions.length;
+function handleSearchKey(e, jobIndex) {
+  currentJobIndex = jobIndex;
+  const list = document.getElementById('suggestionList-' + jobIndex);
+  const open = list && !list.classList.contains('hidden');
+  const count = currentSuggestions.length;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (!open) return;
+    selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, count - 1);
+    highlightSuggestion();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (!open) return;
+    selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+    highlightSuggestion();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (open && selectedSuggestionIndex >= 0) selectSuggestion(selectedSuggestionIndex, jobIndex);
+    else addSearchedItem(jobIndex);
+  } else if (e.key === 'Escape') {
+    hideSuggestions();
+  }
+}
 
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (!open) return;
-        selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, count - 1);
-        highlightSuggestion();
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (!open) return;
-        selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
-        highlightSuggestion();
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (open && selectedSuggestionIndex >= 0) selectSuggestion(selectedSuggestionIndex, jobIndex);
-        else addSearchedItem(jobIndex);
-      } else if (e.key === 'Escape') {
-        hideSuggestions();
-      }
-    }
+function selectSuggestion(index, jobIndex) {
+  currentJobIndex = jobIndex;
+  const m = currentSuggestions[index];
+  if (!m) return;
+  hideSuggestions();
+  const input = document.getElementById('searchOther-' + jobIndex);
+  if (input) input.value = '';
+  openQtyModal(m);
+}
 
-    function selectSuggestion(index, jobIndex) {
-      currentJobIndex = jobIndex;
-      const m = currentSuggestions[index];
-      if (!m) return;
-      hideSuggestions();
-      const input = document.getElementById('searchOther-' + jobIndex);
-      if (input) input.value = '';
-      openQtyModal(m);
-    }
+function addSearchedItem(jobIndex) {
+  currentJobIndex = jobIndex;
+  if (currentSuggestions.length > 0) {
+    const idx = selectedSuggestionIndex >= 0 ? selectedSuggestionIndex : 0;
+    selectSuggestion(idx, jobIndex);
+    return;
+  }
+  const input = document.getElementById('searchOther-' + jobIndex);
+  if (!input) return;
+  const term = input.value.trim();
+  if (!term) return;
+  const m = allMaterials.find(x => x.Item.toLowerCase() === term.toLowerCase())
+         || allMaterials.find(x => x.Item.toLowerCase().includes(term.toLowerCase()));
+  if (m) openQtyModal(m);
+  else addItemToList('—', term, '—', 1, null, jobIndex);
+  input.value = '';
+  hideSuggestions();
+}
 
-    function addSearchedItem(jobIndex) {
-      currentJobIndex = jobIndex;
-      if (currentSuggestions.length > 0) {
-        const idx = selectedSuggestionIndex >= 0 ? selectedSuggestionIndex : 0;
-        selectSuggestion(idx, jobIndex);
-        return;
-      }
+// ─────────────────────────────────────────────
+//  QTY MODAL
+// ─────────────────────────────────────────────
+function openQtyModal(m) {
+  pendingItem = m;
+  document.getElementById('qtyModalTitle').textContent = m.Item;
+  document.getElementById('qtyModalSku').textContent = m.SKU;
+  document.getElementById('qtyModalUnit').textContent = m.Unit;
+  document.getElementById('qtyModalQty').value = '1';
+  document.getElementById('qtyModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('qtyModalQty').select(), 50);
+}
 
-      const input = document.getElementById('searchOther-' + jobIndex);
-      if (!input) return;
-      const term = input.value.trim();
-      if (!term) return;
+function closeQtyModal() {
+  document.getElementById('qtyModal').classList.add('hidden');
+  pendingItem = null;
+}
 
-      const m = allMaterials.find(x => x.Item.toLowerCase() === term.toLowerCase())
-        || allMaterials.find(x => x.Item.toLowerCase().includes(term.toLowerCase()));
-      if (m) openQtyModal(m);
-      else addItemToList('—', term, '—', 1, null, jobIndex);
+function confirmQtyModal() {
+  if (!pendingItem) return;
+  const qty = parseFloat(document.getElementById('qtyModalQty').value) || 1;
+  addItemToList(pendingItem.SKU, pendingItem.Item, pendingItem.Unit, qty, pendingItem.Price, currentJobIndex);
+  closeQtyModal();
+}
 
-      input.value = '';
-      hideSuggestions();
-    }
+// ─────────────────────────────────────────────
+//  MATERIAL LIST (from catalogue)
+// ─────────────────────────────────────────────
+function addItemToList(sku, itemName, unit, qty, price, jobIndex) {
+  jobIndex = jobIndex ?? currentJobIndex;
+  const job = jobs[jobIndex];
+  if (!job) return;
+  qty = qty || 1;
+  price = price !== undefined ? price : null;
 
-    function openQtyModal(m) {
-      pendingItem = m;
-      document.getElementById('qtyModalTitle').textContent = m.Item;
-      document.getElementById('qtyModalSku').textContent = m.SKU;
-      document.getElementById('qtyModalUnit').textContent = m.Unit;
-      document.getElementById('qtyModalQty').value = '1';
-      document.getElementById('qtyModal').classList.remove('hidden');
-      setTimeout(() => document.getElementById('qtyModalQty').select(), 50);
-    }
+  // Duplicate detection: match on SKU for catalogued items, on name for unlisted (sku='—')
+  const existing = job.addedItems.find(i =>
+    sku !== '—' ? i.SKU === sku : i.Item.toLowerCase() === itemName.toLowerCase()
+  );
+  if (existing) {
+    existing.Qty += qty;
+    renderMaterialList(jobIndex);
+    focusSearch(jobIndex);
+    return;
+  }
+  job.addedItems.push({ SKU: sku, Item: itemName, Unit: unit, Qty: qty, Price: price });
+  renderMaterialList(jobIndex);
+  focusSearch(jobIndex);
+}
 
-    function closeQtyModal() {
-      document.getElementById('qtyModal').classList.add('hidden');
-      pendingItem = null;
-    }
+function focusSearch(jobIndex) {
+  const input = document.getElementById('searchOther-' + jobIndex);
+  if (input) input.focus();
+}
 
-    function confirmQtyModal() {
-      if (!pendingItem) return;
-      const qty = parseFloat(document.getElementById('qtyModalQty').value) || 1;
-      addItemToList(pendingItem.SKU, pendingItem.Item, pendingItem.Unit, qty, pendingItem.Price, currentJobIndex);
-      closeQtyModal();
-    }
+function removeItem(jobIndex, index) {
+  const job = jobs[jobIndex];
+  if (!job) return;
+  job.addedItems.splice(index, 1);
+  renderMaterialList(jobIndex);
+  focusSearch(jobIndex);
+}
 
-    function addItemToList(sku, itemName, unit, qty, price, jobIndex = currentJobIndex) {
-      const job = jobs[jobIndex];
-      if (!job) return;
-      qty = qty || 1;
-      price = (price !== undefined) ? price : null;
-      const existing = job.addedItems.find(i => i.SKU === sku && i.Item === itemName);
-      if (existing) {
-        existing.Qty += qty;
-        renderMaterialList(jobIndex);
-        focusSearch(jobIndex);
-        return;
-      }
-      job.addedItems.push({ SKU: sku, Item: itemName, Unit: unit, Qty: qty, Price: price });
-      renderMaterialList(jobIndex);
-      focusSearch(jobIndex);
-    }
+function updateQty(jobIndex, index, value) {
+  const job = jobs[jobIndex];
+  if (!job) return;
+  job.addedItems[index].Qty = parseFloat(value) || 0;
+  recalcSummary();   // directly recalc — no need to re-render the whole table
+}
 
-    function focusSearch(jobIndex) {
-      const input = document.getElementById('searchOther-' + jobIndex);
-      if (input) input.focus();
-    }
+function renderMaterialList(jobIndex) {
+  const job = jobs[jobIndex];
+  const tbody = document.getElementById('materialListBody-' + jobIndex);
+  if (!tbody) return;
+  if (!job.addedItems.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:2rem;text-align:center;color:#475569;font-style:italic;">No items added yet. Search and add materials above.</td></tr>';
+    recalcSummary();
+    return;
+  }
+  tbody.innerHTML = '';
+  job.addedItems.forEach((item, i) => {
+    const unitPrice = item.Price !== null && item.Price !== undefined ? item.Price : null;
+    const totalPrice = unitPrice !== null ? (item.Qty * unitPrice).toFixed(2) : 'N/A';
+    const row = document.createElement('tr');
+    row.innerHTML =
+      `<td style="padding:0.75rem 1rem;font-family:monospace;font-size:0.7rem;color:#475569;">${item.SKU}</td>
+       <td style="padding:0.75rem 1rem;text-align:center;">
+         <input type="number" value="${item.Qty}" min="0" step="any" style="width:4.5rem;text-align:center;" class="field-input" onchange="updateQty(${jobIndex},${i},this.value)">
+       </td>
+       <td style="padding:0.75rem 1rem;color:#64748b;font-size:0.8rem;">${item.Unit}</td>
+       <td style="padding:0.75rem 1rem;font-weight:500;color:#e2e8f0;">${item.Item}</td>
+       <td style="padding:0.75rem 1rem;text-align:right;color:#94a3b8;font-size:0.85rem;">${unitPrice !== null ? '$' + unitPrice.toFixed(2) : 'N/A'}</td>
+       <td style="padding:0.75rem 1rem;text-align:right;font-weight:600;color:#34d399;">${totalPrice !== 'N/A' ? '$' + totalPrice : 'N/A'}</td>
+       <td style="padding:0.75rem 1rem;text-align:center;">
+         <button onclick="removeItem(${jobIndex},${i})" style="color:#f87171;font-weight:700;font-size:1.1rem;background:none;border:none;cursor:pointer;" title="Remove">✕</button>
+       </td>`;
+    tbody.appendChild(row);
+  });
+  recalcSummary();
+}
 
-    function removeItem(jobIndex, index) {
-      const job = jobs[jobIndex];
-      if (!job) return;
-      job.addedItems.splice(index, 1);
-      renderMaterialList(jobIndex);
-      focusSearch(jobIndex);
-      recalcSummary();
-    }
+// ─────────────────────────────────────────────
+//  UNLISTED ITEMS
+// ─────────────────────────────────────────────
+function nextTmpSku() {
+  tmpSkuCounter++;
+  return 'TMP-' + String(tmpSkuCounter).padStart(3, '0');
+}
 
-    function updateQty(jobIndex, index, value) {
-      const job = jobs[jobIndex];
-      if (!job) return;
-      job.addedItems[index].Qty = parseFloat(value) || 0;
-      renderMaterialList(jobIndex);
-      recalcSummary();
-    }
+function openAddModal(jobIndex) {
+  currentJobIndex = jobIndex;
+  document.getElementById('modalItemName').value = '';
+  document.getElementById('modalQty').value = '';
+  document.getElementById('modalUnitPrice').value = '0.00';
+  document.getElementById('modalSkuPreview').textContent = 'TMP-' + String(tmpSkuCounter + 1).padStart(3, '0');
+  document.getElementById('addModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('modalItemName').focus(), 50);
+}
 
-    function renderMaterialList(jobIndex) {
-      const job = jobs[jobIndex];
-      const tbody = document.getElementById('materialListBody-' + jobIndex);
-      if (!tbody) return;
-      tbody.innerHTML = '';
-      if (!job.addedItems.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No items added yet. Search and add materials above.</td></tr>';
-        return;
-      }
-      job.addedItems.forEach((item, i) => {
-        const totalPrice = (item.Qty * (item.Price || 0)).toFixed(2);
-        const row = document.createElement('tr');
-        row.innerHTML =
-          '<td class="p-4" style="font-family:monospace;font-size:0.75rem;color:#9ca3af">' + item.SKU + '</td>' +
-          '<td class="p-4 text-center"><input type="number" value="' + item.Qty + '" min="0" step="any" class="w-20 text-center field-input" onchange="updateQty(' + jobIndex + ', ' + i + ', this.value)"></td>' +
-          '<td class="p-4 text-gray-300">' + item.Unit + '</td>' +
-          '<td class="p-4 font-medium text-white">' + item.Item + '</td>' +
-          '<td class="p-4 text-center font-medium text-green-400">$' + totalPrice + '</td>' +
-          '<td class="p-4 text-center"><button onclick="removeItem(' + jobIndex + ', ' + i + ')" class="text-red-400 hover:text-red-600 font-bold text-lg" title="Remove">✕</button></td>';
-        tbody.appendChild(row);
-      });
-      recalcSummary();
-    }
+function closeAddModal() {
+  document.getElementById('addModal').classList.add('hidden');
+  document.getElementById('modalItemName').classList.remove('input-error');
+}
 
-    function generatePDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const customer = document.getElementById('customer').value || 'Customer';
-      const address = document.getElementById('address').value || '';
-      const date = document.getElementById('date').value || new Date().toLocaleDateString();
-      const notes = document.getElementById('notes').value || '';
+function confirmAddModal() {
+  const name = document.getElementById('modalItemName').value.trim();
+  if (!name) {
+    document.getElementById('modalItemName').classList.add('input-error');
+    document.getElementById('modalItemName').focus();
+    return;
+  }
+  document.getElementById('modalItemName').classList.remove('input-error');
+  const qty = parseFloat(document.getElementById('modalQty').value) || 0;
+  const price = parseFloat(document.getElementById('modalUnitPrice').value) || 0;
+  const sku = nextTmpSku();
+  jobs[currentJobIndex].tmpItems.push({ SKU: sku, Item: name, Unit: 'each', Qty: qty, Price: price });
+  renderTmpList(currentJobIndex);
+  closeAddModal();
+}
 
-      doc.setFontSize(20); doc.text('Job Costing', 20, 20);
-      doc.setFontSize(12);
-      doc.text('Customer: ' + customer, 20, 35);
-      doc.text('Address: ' + address, 20, 42);
-      doc.text('Date: ' + date, 20, 49);
+function removeTmpItem(jobIndex, index) {
+  const job = jobs[jobIndex];
+  if (!job) return;
+  job.tmpItems.splice(index, 1);
+  renderTmpList(jobIndex);
+}
 
-      let y = 56;
-      for (let index = 0; index < jobs.length; index++) {
-        const scopeText = document.getElementById('scope-' + index)?.value || '';
-        if (scopeText) {
-          const sl = doc.splitTextToSize('Scope: ' + scopeText, 170);
-          doc.text(sl, 20, y);
-          y += sl.length * 7 + 4;
-        }
+function updateTmpQty(jobIndex, index, value) {
+  const job = jobs[jobIndex];
+  if (!job) return;
+  job.tmpItems[index].Qty = parseFloat(value) || 0;
+  recalcSummary();
+}
 
-        doc.setFontSize(12); doc.setFont(undefined, 'bold');
-        doc.text('Job ' + (index + 1) + ' Materials', 20, y); y += 8;
-        doc.setFontSize(9); doc.setFont(undefined, 'normal');
-        y = drawHeader(doc, y);
+function updateTmpPrice(jobIndex, index, value) {
+  const job = jobs[jobIndex];
+  if (!job) return;
+  job.tmpItems[index].Price = parseFloat(value) || 0;
+  recalcSummary();
+}
 
-        let matTotal = 0;
-        let matHasNA = false;
-        const job = jobs[index];
-        if (!job.addedItems.length) {
-          doc.text('No items added.', 20, y); y += 8;
-        } else {
-          job.addedItems.forEach(item => {
-            if (y > 272) { doc.addPage(); y = 20; y = drawHeader(doc, y); }
-            y = drawRow(doc, item, y);
-            if (item.Price !== null && item.Price !== undefined) matTotal += item.Price * item.Qty;
-            else matHasNA = true;
-          });
-          y += 3; doc.line(130, y, 190, y); y += 5;
-          doc.setFont(undefined, 'bold'); doc.setFontSize(9);
-          doc.text('Subtotal:', 130, y);
-          doc.text(matTotal.toFixed(2) + (matHasNA ? ' + N/A' : ''), 190, y, { align: 'right' });
-          doc.setFont(undefined, 'normal'); y += 8;
-        }
+function renderTmpList(jobIndex) {
+  const job = jobs[jobIndex];
+  const tbody = document.getElementById('tmpListBody-' + jobIndex);
+  if (!tbody) return;
+  if (!job.tmpItems.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:2rem;text-align:center;color:#475569;font-style:italic;">No unlisted items added yet.</td></tr>';
+    recalcSummary();
+    return;
+  }
+  tbody.innerHTML = '';
+  job.tmpItems.forEach((item, i) => {
+    const totalPrice = (item.Qty * (item.Price || 0)).toFixed(2);
+    const row = document.createElement('tr');
+    row.innerHTML =
+      `<td style="padding:0.75rem 1rem;font-family:monospace;font-size:0.7rem;color:#a5b4fc;">${item.SKU}</td>
+       <td style="padding:0.75rem 1rem;text-align:center;">
+         <input type="number" value="${item.Qty}" min="0" step="any" style="width:4.5rem;text-align:center;" class="field-input" onchange="updateTmpQty(${jobIndex},${i},this.value)">
+       </td>
+       <td style="padding:0.75rem 1rem;color:#64748b;font-size:0.8rem;">${item.Unit}</td>
+       <td style="padding:0.75rem 1rem;font-weight:500;color:#e2e8f0;">${item.Item}</td>
+       <td style="padding:0.75rem 1rem;text-align:right;">
+         <input type="number" value="${item.Price.toFixed(2)}" min="0" step="0.01" style="width:5.5rem;text-align:right;" class="field-input" onchange="updateTmpPrice(${jobIndex},${i},this.value)" title="Edit unit price">
+       </td>
+       <td style="padding:0.75rem 1rem;text-align:right;font-weight:600;color:#34d399;">$${totalPrice}</td>
+       <td style="padding:0.75rem 1rem;text-align:center;">
+         <button onclick="removeTmpItem(${jobIndex},${i})" style="color:#f87171;font-weight:700;font-size:1.1rem;background:none;border:none;cursor:pointer;" title="Remove">✕</button>
+       </td>`;
+    tbody.appendChild(row);
+  });
+  recalcSummary();
+}
 
-        if (job.tmpItems.length) {
-          y += 4;
-          if (y > 255) { doc.addPage(); y = 20; }
-          doc.setFontSize(12); doc.setFont(undefined, 'bold'); doc.text('Items Not Listed', 20, y); y += 8;
-          doc.setFontSize(9); doc.setFont(undefined, 'normal');
-          y = drawHeader(doc, y);
-          job.tmpItems.forEach(item => {
-            if (y > 272) { doc.addPage(); y = 20; y = drawHeader(doc, y); }
-            y = drawRow(doc, item, y);
-          });
-          y += 8;
-        }
+// ─────────────────────────────────────────────
+//  SUMMARY RECALC
+// ─────────────────────────────────────────────
+function validatePct(input) {
+  const val = parseFloat(input.value);
+  if (isNaN(val) || val < 0) input.value = 0;
+  if (val > 999) input.value = 999;
+}
 
-        if (index < jobs.length - 1) {
-          y += 8;
-          if (y > 255) { doc.addPage(); y = 20; }
-        }
-      }
-
-      if (notes) {
-        if (y > 255) { doc.addPage(); y = 20; }
-        doc.setFont(undefined, 'bold'); doc.text('Notes:', 20, y); doc.setFont(undefined, 'normal'); y += 7;
-        doc.text(doc.splitTextToSize(notes, 170), 20, y);
-      }
-
-      const blob = doc.output('blob');
-      const filename = 'Material_List_' + customer.replace(/ /g, '_') + '_' + date + '.pdf';
-      const file = new File([blob], filename, { type: 'application/pdf' });
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({ files: [file], title: 'Material List PDF' }).catch(err => console.log('Share failed', err));
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    }
-
-    function drawHeader(doc, yy) {
-      doc.setFontSize(9); doc.setFont(undefined, 'bold');
-      doc.text('SKU', 20, yy);
-      doc.text('Qty', 60, yy);
-      doc.text('Unit', 75, yy);
-      doc.text('Item', 95, yy);
-      doc.text('Price (TTD)', 190, yy, { align: 'right' });
-      doc.setFont(undefined, 'normal');
-      yy += 4; doc.line(20, yy, 190, yy); yy += 5;
-      return yy;
-    }
-
-    function drawRow(doc, item, yy) {
-      doc.setFontSize(9);
-      doc.text(String(item.SKU), 20, yy);
-      doc.text(String(item.Qty), 60, yy);
-      doc.text(String(item.Unit), 75, yy);
-      doc.text(item.Item.substring(0, 42), 95, yy);
-      doc.text((item.Price !== null && item.Price !== undefined) ? (item.Price * item.Qty).toFixed(2) : 'N/A', 190, yy, { align: 'right' });
-      return yy + 7;
-    }
-
-    function exportCSV() {
-      const customer = document.getElementById('customer').value || 'Customer';
-      const address = document.getElementById('address').value || '';
-      const date = document.getElementById('date').value || new Date().toISOString().split('T')[0];
-      const notes = document.getElementById('notes').value || '';
-      const esc = v => '"' + String(v).replace(/"/g, '""') + '"';
-      const rows = [
-        ['Material List Export'],
-        ['Customer', customer],
-        ['Address', address],
-        ['Date', date],
-        []
-      ];
-
-      jobs.forEach((job, index) => {
-        rows.push(['Job ' + (index + 1)]);
-        rows.push(['Scope', document.getElementById('scope-' + index)?.value || '']);
-        rows.push([]);
-        rows.push(['MATERIALS']);
-        rows.push(['SKU', 'Qty', 'Unit', 'Item', 'Price (TTD)']);
-        let matTotal = 0, matHasNA = false;
-        job.addedItems.forEach(m => {
-          const itemPrice = (m.Price !== null && m.Price !== undefined) ? (m.Price * m.Qty).toFixed(2) : 'N/A';
-          rows.push([m.SKU, m.Qty, m.Unit, m.Item, itemPrice]);
-          if (itemPrice !== 'N/A') matTotal += parseFloat(itemPrice);
-          else matHasNA = true;
-        });
-        rows.push(['Subtotal', '', '', '', matTotal.toFixed(2) + (matHasNA ? ' + N/A' : '')]);
-        rows.push([]);
-        rows.push(['ITEMS NOT LISTED']);
-        rows.push(['SKU', 'Qty', 'Unit', 'Item', 'Price (TTD)']);
-        let tmpTotal = 0, tmpHasNA = false;
-        job.tmpItems.forEach(m => {
-          const itemPrice = (m.Price !== null && m.Price !== undefined) ? (m.Price * m.Qty).toFixed(2) : 'N/A';
-          rows.push([m.SKU, m.Qty, m.Unit, m.Item, itemPrice]);
-          if (itemPrice !== 'N/A') tmpTotal += parseFloat(itemPrice);
-          else tmpHasNA = true;
-        });
-        if (job.tmpItems.length > 0) {
-          rows.push(['Subtotal', '', '', '', tmpTotal.toFixed(2) + (tmpHasNA ? ' + N/A' : '')]);
-        }
-        rows.push([]);
-      });
-
-      rows.push(['Notes', notes]);
-      const csv = rows.map(r => r.map(esc).join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const filename = 'Costing - ' + customer.replace(/ /g, '-') + '-' + date + '.csv';
-      const file = new File([blob], filename, { type: 'text/csv' });
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({ files: [file], title: 'Material List CSV' }).catch(err => console.log('Share failed', err));
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    }
-
-    function nextTmpSku() {
-      const allItems = jobs.flatMap(job => job.tmpItems);
-      if (!allItems.length) return 'TMP-001';
-      const nums = allItems.map(t => {
-        const m = t.SKU.match(/TMP-(\d+)/);
-        return m ? parseInt(m[1]) : 0;
-      });
-      return 'TMP-' + String(Math.max(...nums) + 1).padStart(3, '0');
-    }
-
-    function openAddModal(jobIndex) {
-      currentJobIndex = jobIndex;
-      document.getElementById('modalItemName').value = '';
-      document.getElementById('modalQty').value = '';
-      document.getElementById('modalUnitPrice').value = '0.00';
-      document.getElementById('modalSkuPreview').textContent = nextTmpSku();
-      document.getElementById('addModal').classList.remove('hidden');
-      setTimeout(() => document.getElementById('modalItemName').focus(), 50);
-    }
-
-    function closeAddModal() {
-      document.getElementById('addModal').classList.add('hidden');
-    }
-
-    function confirmAddModal() {
-      const name = document.getElementById('modalItemName').value.trim();
-      if (!name) {
-        document.getElementById('modalItemName').classList.add('border-red-400');
-        document.getElementById('modalItemName').focus();
-        return;
-      }
-      document.getElementById('modalItemName').classList.remove('border-red-400');
-      const qty = parseFloat(document.getElementById('modalQty').value) || 0;
-      const price = parseFloat(document.getElementById('modalUnitPrice').value) || 0;
-      const sku = nextTmpSku();
-      jobs[currentJobIndex].tmpItems.push({ SKU: sku, Item: name, Unit: 'each', Qty: qty, Price: price });
-      renderTmpList(currentJobIndex);
-      closeAddModal();
-      recalcSummary();
-    }
-
-    function removeTmpItem(jobIndex, index) {
-      const job = jobs[jobIndex];
-      if (!job) return;
-      job.tmpItems.splice(index, 1);
-      renderTmpList(jobIndex);
-      recalcSummary();
-    }
-
-    function updateTmpQty(jobIndex, index, value) {
-      const job = jobs[jobIndex];
-      if (!job) return;
-      job.tmpItems[index].Qty = parseFloat(value) || 0;
-      renderTmpList(jobIndex);
-      recalcSummary();
-    }
-
-    function renderTmpList(jobIndex) {
-      const job = jobs[jobIndex];
-      const tbody = document.getElementById('tmpListBody-' + jobIndex);
-      if (!tbody) return;
-      tbody.innerHTML = '';
-      if (!job.tmpItems.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No unlisted items added yet. Click “Add New Item” to add one.</td></tr>';
-        return;
-      }
-      job.tmpItems.forEach((item, i) => {
-        const totalPrice = (item.Qty * (item.Price || 0)).toFixed(2);
-        const row = document.createElement('tr');
-        row.innerHTML =
-          '<td class="p-4" style="font-family:monospace;font-size:0.75rem;color:#9ca3af">' + item.SKU + '</td>' +
-          '<td class="p-4 text-center"><input type="number" value="' + item.Qty + '" min="0" step="any" class="w-20 text-center field-input" onchange="updateTmpQty(' + jobIndex + ', ' + i + ', this.value)"></td>' +
-          '<td class="p-4 text-gray-300">' + item.Unit + '</td>' +
-          '<td class="p-4 font-medium text-white">' + item.Item + '</td>' +
-          '<td class="p-4 text-center font-medium text-green-400">$' + totalPrice + '</td>' +
-          '<td class="p-4 text-center"><button onclick="removeTmpItem(' + jobIndex + ', ' + i + ')" class="text-red-400 hover:text-red-600 font-bold text-lg" title="Remove">&#x2715;</button></td>';
-        tbody.appendChild(row);
-      });
-    }
-
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') {
-        closeAddModal();
-        closeQtyModal();
-      }
+function recalcSummary() {
+  let subtotal = 0;
+  let hasNA = false;
+  jobs.forEach(job => {
+    job.addedItems.forEach(item => {
+      if (item.Price !== null && item.Price !== undefined) subtotal += item.Qty * item.Price;
+      else hasNA = true;
     });
-
-    document.addEventListener('click', e => {
-      if (!e.target.closest('[id^="searchOther-"]') && !e.target.closest('[id^="suggestionList-"]'))
-        hideSuggestions();
+    job.tmpItems.forEach(item => {
+      if (item.Price !== null && item.Price !== undefined) subtotal += item.Qty * item.Price;
+      else hasNA = true;
     });
+  });
+  const markupPct = Math.max(0, parseFloat(document.getElementById('pct-markup').value) || 0);
+  const vatPct    = Math.max(0, parseFloat(document.getElementById('pct-vat').value)    || 0);
+  const markup = subtotal * (markupPct / 100);
+  const vat    = (subtotal + markup) * (vatPct / 100);   // VAT on cost + markup
+  const total  = subtotal + markup + vat;
+  const na = hasNA ? ' + N/A' : '';
+  document.getElementById('bar-sub').textContent    = '$' + subtotal.toFixed(2) + na;
+  document.getElementById('bar-markup').textContent = '$' + markup.toFixed(2);
+  document.getElementById('bar-vat').textContent    = '$' + vat.toFixed(2);
+  document.getElementById('bar-total').textContent  = '$' + total.toFixed(2) + na;
+}
 
-    function recalcSummary() {
-      let subtotal = 0;
-      let hasNA = false;
+// ─────────────────────────────────────────────
+//  PDF EXPORT  (fully fixed)
+// ─────────────────────────────────────────────
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const PAGE_W = 210, PAGE_H = 297;
+  const ML = 15, MR = 15, MT = 15, MB = 20;
+  const contentW = PAGE_W - ML - MR;
+  let y = MT;
+  let pageNum = 1;
 
-      // Calculate subtotal from all jobs
-      jobs.forEach(job => {
-        job.addedItems.forEach(item => {
-          if (item.Price !== null && item.Price !== undefined) {
-            subtotal += item.Qty * item.Price;
-          } else {
-            hasNA = true;
-          }
-        });
-        job.tmpItems.forEach(item => {
-          if (item.Price !== null && item.Price !== undefined) {
-            subtotal += item.Qty * item.Price;
-          } else {
-            hasNA = true;
-          }
-        });
-      });
+  const customer  = document.getElementById('customer').value  || 'Customer';
+  const address   = document.getElementById('address').value   || '';
+  const dateRaw   = document.getElementById('date').value      || new Date().toISOString().split('T')[0];
+  const quoteNo   = document.getElementById('quoteNo').value   || '';
+  const notes     = document.getElementById('notes').value     || '';
+  const markupPct = parseFloat(document.getElementById('pct-markup').value) || 0;
+  const vatPct    = parseFloat(document.getElementById('pct-vat').value)    || 0;
 
-      // Get markup and vat percentages
-      const markupPct = parseFloat(document.getElementById('pct-markup').value) || 0;
-      const vatPct = parseFloat(document.getElementById('pct-vat').value) || 0;
+  // Format date nicely
+  const dateFormatted = dateRaw
+    ? new Date(dateRaw + 'T00:00:00').toLocaleDateString('en-TT', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '';
 
-      // Calculate amounts
-      const markup = subtotal * (markupPct / 100);
-      const vat = (subtotal + markup) * (vatPct / 100);
-      const total = subtotal + markup + vat;
+  // ── helpers ─────────────────────────────────
+  function addPage() {
+    drawPageNumber();
+    doc.addPage();
+    pageNum++;
+    y = MT;
+    drawRunningHeader();
+  }
 
-      // Update display
-      const subDisplay = subtotal.toFixed(2) + (hasNA ? ' + N/A' : '');
-      document.getElementById('bar-sub').textContent = '$' + subtotal.toFixed(2) + (hasNA ? ' + N/A' : '');
-      document.getElementById('bar-markup').textContent = '$' + markup.toFixed(2);
-      document.getElementById('bar-vat').textContent = '$' + vat.toFixed(2);
-      document.getElementById('bar-total').textContent = '$' + total.toFixed(2) + (hasNA ? ' + N/A' : '');
+  function checkY(needed) {
+    if (y + needed > PAGE_H - MB) addPage();
+  }
+
+  function drawPageNumber() {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Page ' + pageNum, PAGE_W / 2, PAGE_H - 8, { align: 'center' });
+    doc.text(COMPANY, ML, PAGE_H - 8);
+    if (quoteNo) doc.text(quoteNo, PAGE_W - MR, PAGE_H - 8, { align: 'right' });
+  }
+
+  function drawRunningHeader() {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(COMPANY + (quoteNo ? '  |  ' + quoteNo : ''), ML, y);
+    y += 5;
+    doc.setDrawColor(220, 220, 220);
+    doc.line(ML, y, PAGE_W - MR, y);
+    y += 5;
+  }
+
+  function hline(color) {
+    doc.setDrawColor(...(color || [220, 220, 220]));
+    doc.setLineWidth(0.3);
+    doc.line(ML, y, PAGE_W - MR, y);
+  }
+
+  function tableHeader() {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 100, 100);
+    doc.text('SKU',       ML,            y);
+    doc.text('QTY',       ML + 28,       y);
+    doc.text('UNIT',      ML + 40,       y);
+    doc.text('DESCRIPTION', ML + 60,    y);
+    doc.text('UNIT $',    ML + 128,      y, { align: 'right' });
+    doc.text('TOTAL TTD', PAGE_W - MR,  y, { align: 'right' });
+    y += 3;
+    hline([180, 180, 180]);
+    y += 4;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+  }
+
+  function tableRow(item) {
+    checkY(8);
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(120, 120, 120);
+    doc.text(String(item.SKU).substring(0, 12), ML, y);
+    doc.setTextColor(30, 30, 30);
+    doc.text(String(item.Qty), ML + 28, y);
+    doc.text(String(item.Unit).substring(0, 8), ML + 40, y);
+
+    // Wrap long item names — never truncate
+    const maxNameW = 65;
+    const nameLines = doc.splitTextToSize(item.Item, maxNameW);
+    doc.text(nameLines, ML + 60, y);
+
+    const unitPrice = item.Price !== null && item.Price !== undefined ? item.Price : null;
+    const lineTotal = unitPrice !== null ? (unitPrice * item.Qty).toFixed(2) : 'N/A';
+    doc.setTextColor(60, 60, 60);
+    doc.text(unitPrice !== null ? '$' + unitPrice.toFixed(2) : 'N/A', ML + 128, y, { align: 'right' });
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 30, 30);
+    doc.text(lineTotal !== 'N/A' ? '$' + lineTotal : 'N/A', PAGE_W - MR, y, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+
+    y += nameLines.length > 1 ? (nameLines.length * 5) : 7;
+    hline([240, 240, 240]);
+    y += 2;
+
+    return unitPrice !== null ? unitPrice * item.Qty : null;
+  }
+
+  function sectionSubtotal(total, hasNA) {
+    checkY(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(80, 80, 80);
+    doc.text('Section Subtotal:', ML + 90, y);
+    doc.setTextColor(20, 20, 20);
+    doc.text('$' + total.toFixed(2) + (hasNA ? ' + N/A' : ''), PAGE_W - MR, y, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    y += 8;
+  }
+
+  // ── COMPANY HEADER ───────────────────────────
+  doc.setFillColor(20, 24, 40);
+  doc.rect(0, 0, PAGE_W, 38, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.setTextColor(255, 255, 255);
+  doc.text(COMPANY, ML, 14);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(160, 175, 210);
+  doc.text('Material Cost Sheet', ML, 21);
+
+  // Quote number top right
+  if (quoteNo) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(180, 200, 255);
+    doc.text('Quote No: ' + quoteNo, PAGE_W - MR, 14, { align: 'right' });
+  }
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(180, 200, 255);
+  doc.text('Date: ' + dateFormatted, PAGE_W - MR, 21, { align: 'right' });
+
+  y = 45;
+
+  // ── CLIENT INFO BOX ──────────────────────────
+  doc.setFillColor(240, 242, 248);
+  doc.roundedRect(ML, y, contentW, 18, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(80, 80, 80);
+  doc.text('CUSTOMER', ML + 4, y + 6);
+  doc.text('ADDRESS', ML + 90, y + 6);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(20, 20, 20);
+  doc.text(customer, ML + 4, y + 13);
+  doc.text(address, ML + 90, y + 13);
+  y += 24;
+
+  // ── JOB SECTIONS ────────────────────────────
+  let grandSubtotal = 0;
+  let grandHasNA = false;
+
+  jobs.forEach((job, idx) => {
+    checkY(20);
+
+    // Section heading
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(50, 80, 160);
+    doc.text('Section ' + (idx + 1), ML, y);
+    y += 5;
+    hline([100, 130, 220]);
+    y += 5;
+
+    // Scope
+    const scopeText = job.scope || document.getElementById('scope-' + idx)?.value || '';
+    if (scopeText) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8.5);
+      doc.setTextColor(80, 80, 80);
+      const scopeLines = doc.splitTextToSize('Scope: ' + scopeText, contentW);
+      checkY(scopeLines.length * 5 + 4);
+      doc.text(scopeLines, ML, y);
+      y += scopeLines.length * 5 + 4;
     }
 
-    window.onload = () => {
-      document.getElementById('date').value = new Date().toISOString().split('T')[0];
-      loadMaterials();
-      recalcSummary();
-    };
-  </script>
+    // Material list
+    if (job.addedItems.length) {
+      checkY(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(60, 60, 60);
+      doc.text('MATERIALS FROM CATALOGUE', ML, y);
+      y += 5;
+      tableHeader();
+      let secTotal = 0, secNA = false;
+      job.addedItems.forEach(item => {
+        const line = tableRow(item);
+        if (line !== null) secTotal += line;
+        else secNA = true;
+      });
+      sectionSubtotal(secTotal, secNA);
+      grandSubtotal += secTotal;
+      if (secNA) grandHasNA = true;
+    }
+
+    // Unlisted items
+    if (job.tmpItems.length) {
+      checkY(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(60, 60, 60);
+      doc.text('ADDITIONAL / UNLISTED ITEMS', ML, y);
+      y += 5;
+      tableHeader();
+      let tmpTotal = 0, tmpNA = false;
+      job.tmpItems.forEach(item => {
+        const line = tableRow(item);
+        if (line !== null) tmpTotal += line;
+        else tmpNA = true;
+      });
+      sectionSubtotal(tmpTotal, tmpNA);
+      grandSubtotal += tmpTotal;
+      if (tmpNA) grandHasNA = true;
+    }
+
+    y += 4;
+  });
+
+  // ── NOTES ───────────────────────────────────
+  if (notes) {
+    checkY(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(60, 60, 60);
+    doc.text('NOTES', ML, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(80, 80, 80);
+    const noteLines = doc.splitTextToSize(notes, contentW);
+    checkY(noteLines.length * 5 + 4);
+    doc.text(noteLines, ML, y);
+    y += noteLines.length * 5 + 8;
+  }
+
+  // ── FINANCIAL SUMMARY BOX ────────────────────
+  checkY(55);
+  const markup = grandSubtotal * (markupPct / 100);
+  const vat    = (grandSubtotal + markup) * (vatPct / 100);
+  const total  = grandSubtotal + markup + vat;
+  const naTag  = grandHasNA ? ' + N/A' : '';
+
+  doc.setFillColor(20, 24, 40);
+  doc.roundedRect(ML, y, contentW, 52, 3, 3, 'F');
+
+  const boxLeft = ML + 6;
+  const boxRight = PAGE_W - MR - 6;
+  let by = y + 9;
+
+  function summaryLine(label, value, big) {
+    doc.setFont('helvetica', big ? 'bold' : 'normal');
+    doc.setFontSize(big ? 10.5 : 9);
+    doc.setTextColor(big ? 255 : 180, big ? 255 : 195, big ? 255 : 230);
+    doc.text(label, boxLeft, by);
+    doc.text(value, boxRight, by, { align: 'right' });
+    by += big ? 9 : 7;
+  }
+  function summaryDivider() {
+    doc.setDrawColor(60, 65, 100);
+    doc.setLineWidth(0.3);
+    doc.line(boxLeft, by - 1, boxRight, by - 1);
+  }
+
+  summaryLine('Subtotal (cost)',                        '$' + grandSubtotal.toFixed(2) + naTag);
+  summaryLine('Markup (' + markupPct + '%)',            '$' + markup.toFixed(2));
+  summaryDivider();
+  by += 2;
+  summaryLine('VAT (' + vatPct + '% on cost + markup)', '$' + vat.toFixed(2));
+  summaryDivider();
+  by += 3;
+  summaryLine('TOTAL QUOTED (TTD)',                     '$' + total.toFixed(2) + naTag, true);
+
+  y += 58;
+
+  // ── PAGE NUMBERS (all pages) ─────────────────
+  drawPageNumber();
+
+  // ── OUTPUT ──────────────────────────────────
+  const blob = doc.output('blob');
+  const safeName = customer.replace(/[^a-zA-Z0-9]/g, '_');
+  const filename = 'Quotation_' + safeName + '_' + dateRaw + '.pdf';
+  const file = new File([blob], filename, { type: 'application/pdf' });
+
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: 'Material Cost Sheet' }).catch(() => downloadBlob(blob, filename));
+  } else {
+    downloadBlob(blob, filename);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  CSV EXPORT  (fully fixed)
+// ─────────────────────────────────────────────
+function exportCSV() {
+  const customer  = document.getElementById('customer').value  || 'Customer';
+  const address   = document.getElementById('address').value   || '';
+  const dateRaw   = document.getElementById('date').value      || new Date().toISOString().split('T')[0];
+  const quoteNo   = document.getElementById('quoteNo').value   || '';
+  const notes     = document.getElementById('notes').value     || '';
+  const markupPct = parseFloat(document.getElementById('pct-markup').value) || 0;
+  const vatPct    = parseFloat(document.getElementById('pct-vat').value)    || 0;
+
+  // Only quote strings; output numbers as raw numerics for spreadsheet compatibility
+  const esc = v => {
+    if (typeof v === 'number') return isFinite(v) ? v : '';
+    return '"' + String(v).replace(/"/g, '""') + '"';
+  };
+  const row = (...cols) => cols.map(esc).join(',');
+
+  const rows = [];
+  rows.push(row(COMPANY));
+  rows.push(row('Material Cost Sheet'));
+  rows.push('');
+  rows.push(row('Customer', customer));
+  rows.push(row('Address',  address));
+  rows.push(row('Date',     dateRaw));
+  if (quoteNo) rows.push(row('Quote No.', quoteNo));
+  rows.push('');
+
+  let grandSubtotal = 0;
+  let grandHasNA = false;
+
+  jobs.forEach((job, idx) => {
+    rows.push(row('SECTION ' + (idx + 1)));
+    const scopeText = job.scope || document.getElementById('scope-' + idx)?.value || '';
+    if (scopeText) rows.push(row('Scope', scopeText));
+    rows.push('');
+
+    // Materials from catalogue
+    rows.push(row('MATERIALS FROM CATALOGUE'));
+    rows.push(row('SKU', 'Qty', 'Unit', 'Description', 'Unit Price (TTD)', 'Line Total (TTD)'));
+    let secTotal = 0, secNA = false;
+    job.addedItems.forEach(m => {
+      const unitPrice = m.Price !== null && m.Price !== undefined ? m.Price : null;
+      const lineTotal = unitPrice !== null ? parseFloat((unitPrice * m.Qty).toFixed(2)) : 'N/A';
+      rows.push(row(m.SKU, m.Qty, m.Unit, m.Item, unitPrice !== null ? unitPrice : 'N/A', lineTotal));
+      if (lineTotal !== 'N/A') secTotal += lineTotal;
+      else secNA = true;
+    });
+    rows.push(row('', '', '', '', 'Section Subtotal', secTotal + (secNA ? ' + N/A' : '')));
+    grandSubtotal += secTotal;
+    if (secNA) grandHasNA = true;
+    rows.push('');
+
+    // Unlisted items
+    if (job.tmpItems.length) {
+      rows.push(row('ADDITIONAL / UNLISTED ITEMS'));
+      rows.push(row('SKU', 'Qty', 'Unit', 'Description', 'Unit Price (TTD)', 'Line Total (TTD)'));
+      let tmpTotal = 0, tmpNA = false;
+      job.tmpItems.forEach(m => {
+        const unitPrice = m.Price || 0;
+        const lineTotal = parseFloat((unitPrice * m.Qty).toFixed(2));
+        rows.push(row(m.SKU, m.Qty, m.Unit, m.Item, unitPrice, lineTotal));
+        tmpTotal += lineTotal;
+      });
+      rows.push(row('', '', '', '', 'Section Subtotal', tmpTotal));
+      grandSubtotal += tmpTotal;
+      rows.push('');
+    }
+  });
+
+  // Financial summary
+  const markup = grandSubtotal * (markupPct / 100);
+  const vat    = (grandSubtotal + markup) * (vatPct / 100);
+  const total  = grandSubtotal + markup + vat;
+  const naTag  = grandHasNA ? ' + N/A' : '';
+
+  rows.push(row('FINANCIAL SUMMARY'));
+  rows.push(row('Subtotal (cost)',                         parseFloat(grandSubtotal.toFixed(2))));
+  rows.push(row('Markup (' + markupPct + '%)',              parseFloat(markup.toFixed(2))));
+  rows.push(row('VAT (' + vatPct + '% on cost+markup)',    parseFloat(vat.toFixed(2))));
+  rows.push(row('TOTAL QUOTED (TTD)',                       parseFloat(total.toFixed(2)) + naTag));
+  rows.push('');
+
+  if (notes) {
+    rows.push(row('Notes', notes));
+    rows.push('');
+  }
+
+  const csv = rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const safeName = customer.replace(/[^a-zA-Z0-9]/g, '_');
+  const filename = 'Costing_' + safeName + '_' + dateRaw + '.csv';
+  const file = new File([blob], filename, { type: 'text/csv' });
+
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: 'Material Cost Sheet CSV' }).catch(() => downloadBlob(blob, filename));
+  } else {
+    downloadBlob(blob, filename);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  UTILS
+// ─────────────────────────────────────────────
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function handleModalOverlayClick(e, modalId) {
+  if (e.target.id === modalId) {
+    if (modalId === 'addModal') closeAddModal();
+    if (modalId === 'qtyModal') closeQtyModal();
+  }
+}
+
+// Global keyboard
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeAddModal(); closeQtyModal(); }
+});
+
+// Close suggestions on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('[id^="searchOther-"]') && !e.target.closest('[id^="suggestionList-"]')) {
+    hideSuggestions();
+  }
+});
+</script>
 </body>
-
 </html>
