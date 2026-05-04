@@ -955,7 +955,7 @@
       // Financial summary box
       checkY(55);
       const markup = grandTotal * (markupPct / 100);
-      const vat = (grandTotal + markup) * (vatPct / 100);
+      const vat = (grandTotal) * (vatPct / 100);
       const total = grandTotal + markup + vat + labour + inspection;
       const naTag = grandNA ? ' + N/A' : '';
       doc.setFillColor(20, 24, 40); doc.roundedRect(ML, y, contentW, 70, 3, 3, 'F');
