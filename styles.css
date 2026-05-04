@@ -438,3 +438,20 @@ tbody tr:hover {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+
+/* ADD THIS AT THE TOP OR BOTTOM */
+
+/* ─────────────────────────────────────────────
+ *  UTILITIES (NEW)
+ ─ *──────────────────────────────────────────── */
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-gap {
+  display: flex;
+  gap: 0.75rem;
+}
