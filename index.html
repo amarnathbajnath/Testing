@@ -978,7 +978,7 @@
 
       drawPageNumber();
       const blob = doc.output('blob');
-      const fn = 'Quotation-' + customer.replace(/[^a-zA-Z0-9]/g, '-') + '-' + dateRaw + '.pdf';
+      const fn = 'Costing-' + customer.replace(/[^a-zA-Z0-9]/g, '-') + '-' + dateRaw + '.pdf';
       const file = new File([blob], fn, { type: 'application/pdf' });
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         navigator.share({ files: [file], title: 'Material Cost Sheet' }).catch(() => downloadBlob(blob, fn));
