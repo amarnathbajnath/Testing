@@ -1104,7 +1104,7 @@
       const inspection = Math.max(0, parseFloat(document.getElementById('inspectionCost').value) || 0);
 
       const markup = matSub * (markupPct / 100);
-      const vat = (matSub + markup) * (vatPct / 100);
+      const vat = matSub * (vatPct / 100);
       const works = matSub + markup + vat;
       const total = works + labour + inspection;
 
