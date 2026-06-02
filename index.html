@@ -537,7 +537,7 @@
     //  MATERIAL LIST
     // ─────────────────────────────────────────────
 
-    function addItemToList(sku, itemName, unit, qty = 1, price = null, jobIndex = currentJobIndex) {
+   /* function addItemToList(sku, itemName, unit, qty = 1, price = null, jobIndex = currentJobIndex) {
       const job = jobs[jobIndex];
       if (!job) return;
 
@@ -555,9 +555,9 @@
 
       renderMaterialList(jobIndex);
       focusSearch(jobIndex);
-    }
+    } */
 
-    /*   function addItemToList(sku, itemName, unit, qty, price, jobIndex) {
+       function addItemToList(sku, itemName, unit, qty, price, jobIndex) {
         jobIndex = jobIndex ?? currentJobIndex;
         const job = jobs[jobIndex]; if (!job) return;
         qty = qty || 1; price = price !== undefined ? price : null;
@@ -565,7 +565,7 @@
         if (existing) { existing.Qty += qty; renderMaterialList(jobIndex); focusSearch(jobIndex); return; }
         job.addedItems.push({ SKU: sku, Item: itemName, Unit: unit, Qty: qty, Price: price });
         renderMaterialList(jobIndex); focusSearch(jobIndex);
-      } */
+      }
 
     function focusSearch(jobIndex) { const input = document.getElementById('searchOther-' + jobIndex); if (input) input.focus(); }
     function removeItem(jobIndex, index) { const job = jobs[jobIndex]; if (!job) return; job.addedItems.splice(index, 1); renderMaterialList(jobIndex); focusSearch(jobIndex); }
